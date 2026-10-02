@@ -62,7 +62,9 @@ if echo "$out" | grep -q "pay confirmado" && echo "$out" | grep -q "← 200"; th
 else fail 3 "pay A→X: $(echo "$out" | tail -3)"; fi
 
 # ── Beat 4 · B huérfano (sin attestation) ────────────────────────────────
-banner 4 "pago B→X \$0.50 sin attestation → AttestationMissing"
+# Los pays que revierten van con --skip-preflight (W2): el revert aterriza
+# on-chain como tx fallida con signature real — verificable en explorer.
+banner 4 "pago B→X \$0.50 sin attestation → AttestationMissing (tx fallida on-chain)"
 bst=$(curl -s "$ISSUER/status/$AGENT_B_WALLET")
 echo "  status B: $bst"
 if echo "$bst" | grep -q '"status":"vigente"'; then
@@ -70,31 +72,35 @@ if echo "$bst" | grep -q '"status":"vigente"'; then
   curl -s -X POST "$ISSUER/revoke" -H 'content-type: application/json' \
     -d "{\"wallet\":\"$AGENT_B_WALLET\"}"; echo; sleep 2
 fi
-out=$($PAY "$X" 0.50 --keypair keys/agent-b.json 2>&1); echo "$out"
-if echo "$out" | grep -q "AttestationMissing"; then
-  ok 4 "revertido con AttestationMissing (agente sin identidad no paga)"
-else fail 4 "se esperaba AttestationMissing: $(echo "$out" | tail -2)"; fi
+out=$($PAY "$X" 0.50 --keypair keys/agent-b.json --skip-preflight 2>&1); echo "$out"
+s=$(sigline "$out")
+if echo "$out" | grep -q "AttestationMissing" && [ -n "$s" ]; then
+  ok 4 "revertido con AttestationMissing — tx fallida $s"
+else fail 4 "se esperaba AttestationMissing+sig: $(echo "$out" | tail -2)"; fi
 
 # ── Beat 5 · over-limit + payee no whitelisted ───────────────────────────
-banner 5 "A→X \$10 (over per-tx) → OverPerTxLimit · A→Y \$0.50 → PayeeNotWhitelisted"
-out=$($PAY "$X" 10 2>&1); echo "$out"
-echo "$out" | grep -q "OverPerTxLimit" \
-  && ok 5a "revertido con OverPerTxLimit" \
-  || fail 5a "esperaba OverPerTxLimit: $(echo "$out" | tail -2)"
-out=$($PAY "$Y" 0.50 2>&1); echo "$out"
-echo "$out" | grep -q "PayeeNotWhitelisted" \
-  && ok 5b "revertido con PayeeNotWhitelisted (Y fuera del mandato)" \
-  || fail 5b "esperaba PayeeNotWhitelisted: $(echo "$out" | tail -2)"
+banner 5 "A→X \$10 → OverPerTxLimit · A→Y \$0.50 → PayeeNotWhitelisted (txs fallidas on-chain)"
+out=$($PAY "$X" 10 --skip-preflight 2>&1); echo "$out"
+s=$(sigline "$out")
+echo "$out" | grep -q "OverPerTxLimit" && [ -n "$s" ] \
+  && ok 5a "revertido con OverPerTxLimit — tx fallida $s" \
+  || fail 5a "esperaba OverPerTxLimit+sig: $(echo "$out" | tail -2)"
+out=$($PAY "$Y" 0.50 --skip-preflight 2>&1); echo "$out"
+s=$(sigline "$out")
+echo "$out" | grep -q "PayeeNotWhitelisted" && [ -n "$s" ] \
+  && ok 5b "revertido con PayeeNotWhitelisted — tx fallida $s" \
+  || fail 5b "esperaba PayeeNotWhitelisted+sig: $(echo "$out" | tail -2)"
 
 # ── Beat 6 · revoke mandato + pay final revertido ────────────────────────
-banner 6 "owner revoca mandato A → siguiente pay → MandateRevoked"
+banner 6 "owner revoca mandato A → siguiente pay → MandateRevoked (tx fallida on-chain)"
 out=$($OWNER revoke --agent a 2>&1); echo "$out"; s=$(sigline "$out")
 [ -n "$s" ] && echo "  explorer: https://explorer.solana.com/tx/$s?cluster=devnet"
 sleep 3
-out=$($PAY "$X" 0.50 2>&1); echo "$out"
-if echo "$out" | grep -q "MandateRevoked"; then
-  ok 6 "revoke $s → pay revertido con MandateRevoked (¡mirá el dashboard!)"
-else fail 6 "esperaba MandateRevoked: $(echo "$out" | tail -2)"; fi
+out=$($PAY "$X" 0.50 --skip-preflight 2>&1); echo "$out"
+s2=$(sigline "$out")
+if echo "$out" | grep -q "MandateRevoked" && [ -n "$s2" ]; then
+  ok 6 "revoke $s → pay revertido MandateRevoked — tx fallida $s2 (¡mirá el dashboard!)"
+else fail 6 "esperaba MandateRevoked+sig: $(echo "$out" | tail -2)"; fi
 
 # ── Resumen ──────────────────────────────────────────────────────────────
 echo; echo "══════════ RESUMEN DE BEATS ══════════"

@@ -42,11 +42,13 @@ else
   echo "service-y pid $! → :$SERVICE_Y_PORT (payee $SERVICE_Y_WALLET)"
 fi
 
-# Espera de readiness (máx ~15s).
+# Espera de readiness (máx ~15s). El `|| true` es necesario: una asignación
+# `var=$(curl -sf ...)` que falla devuelve exit≠0 y `set -e` mataría el
+# script silenciosamente antes de reintentar.
 for i in $(seq 1 15); do
-  okx=$(curl -sf --max-time 2 "http://localhost:$SERVICE_X_PORT/health" >/dev/null 2>&1 && echo 1)
-  oky=$(curl -sf --max-time 2 "http://localhost:$SERVICE_Y_PORT/health" >/dev/null 2>&1 && echo 1)
-  oki=$(curl -sf --max-time 3 "http://localhost:$ISSUER_PORT/status/$AGENT_A_WALLET" >/dev/null 2>&1 && echo 1)
+  okx=$(curl -sf --max-time 2 "http://localhost:$SERVICE_X_PORT/health" >/dev/null 2>&1 && echo 1 || true)
+  oky=$(curl -sf --max-time 2 "http://localhost:$SERVICE_Y_PORT/health" >/dev/null 2>&1 && echo 1 || true)
+  oki=$(curl -sf --max-time 3 "http://localhost:$ISSUER_PORT/status/$AGENT_A_WALLET" >/dev/null 2>&1 && echo 1 || true)
   [ -n "$okx" ] && [ -n "$oky" ] && [ -n "$oki" ] && { echo "✓ los 3 servicios responden"; exit 0; }
   sleep 1
 done

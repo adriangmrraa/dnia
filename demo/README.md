@@ -37,14 +37,22 @@ Todo automatizado: `bash scripts/run_beats.sh`. Narración sugerida:
    Mostrar el ledger del dashboard con la línea nueva linkeada al explorer.
 4. **B huérfano** (~10s) — “El agente B tiene mandato pero NO attestation:
    el mismo programa lo rechaza con `AttestationMissing`.”
-   `agent pay … 0.50 --keypair keys/agent-b.json` → revert.
+   `agent pay … 0.50 --keypair keys/agent-b.json --skip-preflight` → revert
+   **grabado on-chain como tx fallida** con signature real.
 5. **Límites** (~15s) — “\$10 excede el máximo por tx → `OverPerTxLimit`.
    El mismo pago de \$0.50 al servicio Y → `PayeeNotWhitelisted`. Ningún
-   servicio ni middleware decide esto: revierte on-chain.”
+   servicio ni middleware decide esto: revierte on-chain — y la tx fallida
+   queda en la chain para siempre.”
 6. **Revocación en vivo** (~15s) — “El owner revoca el mandato… y el
    siguiente pago del agente revierte `MandateRevoked`. Mirá el dashboard:
    el panel del mandato pasó a **revocado** sin recargar nada manual —
    solo está leyendo la chain.” `owner.ts revoke --agent a`.
+
+> Los pays que revierten (beats 4, 5 y 6) corren con `--skip-preflight` en
+> `run_beats.sh`: sin ese flag el revert muere en la simulación client-side
+> y nunca existe la tx fallida. Con el flag la tx aterriza, marca `err` en
+> el explorer y muestra el `Error Code` del gate en sus logs — solo cuesta
+> el fee de red (~0.000005 SOL) del agente.
 
 ## Checklist de verificación en Explorer (cluster=devnet)
 
@@ -52,11 +60,11 @@ Todo automatizado: `bash scripts/run_beats.sh`. Narración sugerida:
 |---|---|
 | 1 attest | Programa SAS `22zoJM…` ejecutado; cuenta attestation PDA creada |
 | 2 mandato | Programa gate `D8pcKtez…`; ix `init_mandate` exitosa |
-| 3 pay | `transfer` SPL de 500.000 base units A→ATA(X) + logs `Program data:` con `PaymentReceipt` |
-| 4 B huérfano | tx **fallida**, log `Error Code: AttestationMissing` |
+| 3 pay | `transfer` SPL de 500.000 base units A→ATA(X) + logs `Program data:` con `PaymentReceipt` (incluye `mint` = USDC-test) |
+| 4 B huérfano | tx **fallida** real (signature impresa por el CLI), `err` en explorer + log `Error Code: AttestationMissing` |
 | 5 over-limit | tx fallida `Error Code: OverPerTxLimit` |
 | 5 payee Y | tx fallida `Error Code: PayeeNotWhitelisted` |
-| 6 revoke+pay | `revoke_mandate` OK; el `pay` siguiente falla `MandateRevoked` |
+| 6 revoke+pay | `revoke_mandate` OK; el `pay` siguiente es una tx **fallida** `Error Code: MandateRevoked` |
 
 Direcciones y firmas de la corrida registrada: `docs/SESSION_LOG.md` y
 `sdd/changes/agentic-dni/tasks.md` (sección Evidencia de cada slice).

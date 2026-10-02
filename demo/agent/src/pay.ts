@@ -11,6 +11,11 @@
  * no whitelisted, mandato revocado…) el CLI imprime el GateError
  * distinguible y sale con código 1 — nunca reintenta con X-Payment.
  *
+ * Flag `--skip-preflight` (beats de revert de la demo — W2): la tx se envía
+ * aunque la simulación falle, así el revert queda grabado on-chain como tx
+ * fallida con signature real (verificable en explorer). Sin el flag, el
+ * revert muere en el preflight client-side y no existe signature.
+ *
  * Corre desde demo/ (WSL o Windows); keypairs/.env de la demo (INV-5).
  */
 import * as anchor from "@anchor-lang/core";
@@ -44,7 +49,7 @@ interface PaymentRequirements {
 
 function usage(): never {
   console.error(
-    "uso: tsx agent/src/pay.ts <serviceUrl> <amountUsdc> [--keypair keys/agent-b.json]"
+    "uso: tsx agent/src/pay.ts <serviceUrl> <amountUsdc> [--keypair keys/agent-b.json] [--skip-preflight]"
   );
   process.exit(2);
 }
@@ -52,6 +57,12 @@ function usage(): never {
 function arg(flag: string): string | undefined {
   const i = process.argv.indexOf(flag);
   return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+/** Nombre del GateError a partir de logs de una tx (meta.logMessages). */
+function gateErrorFromLogs(logs: string[]): string | null {
+  const hit = logs.join("\n").match(/Error Code: (\w+)/);
+  return hit ? hit[1] : null;
 }
 
 /** Extrae el nombre de GateError de un revert anchor/web3. */
@@ -140,24 +151,81 @@ async function main() {
   const serviceAta = await getAssociatedTokenAddress(mint, payee);
 
   // ── 3. pay on-chain (atómico — revierte entero si un check falla) ────
+  const skipPreflight = process.argv.includes("--skip-preflight");
+  const accounts = {
+    agent: agent.publicKey,
+    config: configPda,
+    attestation: attestationPda,
+    mandate: mandatePda,
+    service: payee,
+    agentAta,
+    serviceAta,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  };
+
   let sig: string;
-  try {
-    sig = await program.methods
+  if (skipPreflight) {
+    // Envío manual con preflight salteado (W2): aunque el gate revierta, la
+    // tx aterriza on-chain y queda una signature real de tx fallida —
+    // inspeccionable en explorer (err + Error Code en los logs).
+    const tx = await program.methods
       .pay(amount, serviceRef as unknown as number[])
-      .accountsPartial({
-        agent: agent.publicKey,
-        config: configPda,
-        attestation: attestationPda,
-        mandate: mandatePda,
-        service: payee,
-        agentAta,
-        serviceAta,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .rpc();
-  } catch (e: any) {
-    console.log(`✗ pay REVERTIDO on-chain: ${gateErrorName(e)}`);
-    process.exit(1);
+      .accountsPartial(accounts)
+      .transaction();
+    tx.feePayer = agent.publicKey;
+    tx.recentBlockhash = (
+      await conn.getLatestBlockhash("confirmed")
+    ).blockhash;
+    const signed = await provider.wallet.signTransaction(tx);
+    sig = await conn.sendRawTransaction(signed.serialize(), {
+      skipPreflight: true,
+    });
+    // OJO: confirmTransaction RECHAZA con el err crudo cuando la tx aterriza
+    // fallida (no siempre — race entre poll y signatureSubscribe). El
+    // resultado autoritativo se lee después con getTransaction.
+    let confirmErr: any = null;
+    try {
+      await conn.confirmTransaction(sig, "confirmed");
+    } catch (e) {
+      confirmErr = e;
+    }
+
+    const landed = await conn.getTransaction(sig, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+    if (!landed) {
+      console.log(
+        `✗ pay enviado con skipPreflight pero no confirmó: ${sig}` +
+          (confirmErr ? ` — err: ${JSON.stringify(confirmErr)}` : "")
+      );
+      process.exit(1);
+    }
+    if (landed?.meta?.err) {
+      const name =
+        gateErrorFromLogs(landed.meta.logMessages ?? []) ??
+        JSON.stringify(landed.meta.err);
+      console.log(`✗ pay REVERTIDO on-chain: ${name}`);
+      console.log(`  tx fallida ${sig}`);
+      console.log(
+        `  https://explorer.solana.com/tx/${sig}?cluster=devnet`
+      );
+      process.exit(1);
+    }
+  } else {
+    try {
+      sig = await program.methods
+        .pay(amount, serviceRef as unknown as number[])
+        .accountsPartial(accounts)
+        .rpc();
+    } catch (e: any) {
+      // Revert detectado en simulación (preflight): la tx NO queda on-chain.
+      console.log(
+        `✗ pay REVERTIDO en simulación (preflight): ${gateErrorName(e)} — ` +
+          `sin signature (la tx no aterrizó on-chain)`
+      );
+      process.exit(1);
+    }
   }
   console.log(`✓ pay confirmado: ${sig}`);
   console.log(`  https://explorer.solana.com/tx/${sig}?cluster=devnet`);
