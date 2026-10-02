@@ -164,3 +164,34 @@ El argumento del equipo: "los estados van a regular; hoy la responsabilidad de a
 - [ ] Toolchain del programa: Anchor vs nativo; gate-in-program vs facilitator-check → pasa a diseño SDD (Solana CLI/Anchor ausentes — instalación con permiso).
 - [ ] Modelo de negocio: open protocol + fee por verificación / licencia a facilitators → pasa a spec.
 - [ ] Roadmap regulatorio como narrativa (no como dependencia) → material del pitch.
+
+## 12. Modelo de adopción — cero fricción
+
+**[EVIDENCIA — implementado en `demo/`]:** la suite se adopta sin cuenta, sin API key y sin permiso. El programa gate y el programa SAS son capa de bien público: **la chain es la API**. Nadie se registra ante nosotros — cada rol interactúa con cuentas públicas.
+
+### Quiénes adoptan y qué hacen
+
+| Adoptante | Qué hace concretamente | Qué NO necesita |
+|---|---|---|
+| **Servicio / merchant** | Responder 402 con requirements + verificar el `PaymentReceipt` on-chain — en la demo es `createGate({programId, payee, price, mint})` de `demo/services/gate-check.ts` (~140 líneas de helper, ~10 líneas de handler). `service-z` (:3405) queda gateado solo con eso. | Registro, API key, SDK propietario, permiso del gate |
+| **Facilitator / router** | El mismo verify como hook de settle en su flujo 402: parsea `Program data:` de la tx y exige payee/mint/monto/invoice propios. | Nada extra — es una lectura RPC cualquiera |
+| **Owner del agente** | Una tx `init_mandate` con la policy (máx/tx, cap diario, whitelist de payees, expiry) + `revoke_mandate` cuando quiera. En la demo: `owner.ts init-mandate --agent a --max 5 --cap 10 --payees x`. | Custodia nueva — firma con su wallet actual |
+| **Humano (principal)** | Una llamada al issuer: `POST /attest {wallet, level}` — en producción es el flujo KYC del issuer elegido. | PII on-chain (INV-1: solo nivel + timestamp) |
+
+### Por qué no hay cuenta ni permiso
+
+El gate es un programa abierto: cualquiera puede crear mandatos, pagar gateado o verificar recibos sin hablar con nadie. La **autoridad queda donde corresponde**: el issuer decide a quién atesta; el owner decide a qué servicios puede pagar su agente. El adoptante no pide permiso al gate — *exige* que el pago venga por el gate. Es x402 con enforcement on-chain: el middleware no decide, la tx revierte.
+
+### Niveles de adopción
+
+- **Soft check** (lo que hacen service-x/y/z): el servicio publica requirements y verifica el recibo post-pago. Cero costo si nadie paga.
+- **Routed-through-gate** (más fuerte): el único camino de cobro es `pay` del gate — mismo código, cambia la exposición del payee (ej. cobros a un ATA cuyo dueño solo cobra via recibo). Producción.
+
+### Fricción honesta que queda
+
+- **Alta del mandato**: hoy es una tx del owner por CLI; producción pide UX wallet (un approve en Phantom). Y el MVP no tiene `update_mandate`: agregar un payee es close + re-init (roadmap).
+- **Elección de issuer**: el gate confía en (credential, schema) configurados — decidir qué issuer(s) aceptar es gobernanza real; multi-issuer está en roadmap.
+- **Gestión de wallets**: el servicio necesita una wallet payee + ATA del mint — trivial pero no cero (`adopt_service.ts` lo automatiza en la demo).
+- **Cold-start de agentes**: attestation + mandato + fondos USDC; nada de eso se resuelve adoptando el verify.
+
+**Beat de adopción en vivo:** `bash scripts/demo_adoption.sh` — levanta service-z, muestra el 402, el revert `PayeeNotWhitelisted` on-chain (la chain decide), la autorización del owner y el pago 200. La tab "Adopción" del dashboard (:3404) muestra el snippet real y los adoptantes online.

@@ -42,6 +42,18 @@ else
   echo "service-y pid $! → :$SERVICE_Y_PORT (payee $SERVICE_Y_WALLET)"
 fi
 
+# service-z es opcional: solo si adopt_service.ts ya lo dio de alta en .env
+if [ -n "${SERVICE_Z_WALLET:-}" ]; then
+  SERVICE_Z_PORT=${SERVICE_Z_PORT:-3405}
+  if up service-z "$SERVICE_Z_PORT" /health; then
+    echo "service-z ya corre en :$SERVICE_Z_PORT"
+  else
+    PAYEE_WALLET=$SERVICE_Z_WALLET PORT=$SERVICE_Z_PORT \
+      nohup npx tsx services/service-z/src/index.ts > logs/service-z.log 2>&1 &
+    echo "service-z pid $! → :$SERVICE_Z_PORT (payee $SERVICE_Z_WALLET)"
+  fi
+fi
+
 # Espera de readiness (máx ~15s). El `|| true` es necesario: una asignación
 # `var=$(curl -sf ...)` que falla devuelve exit≠0 y `set -e` mataría el
 # script silenciosamente antes de reintentar.

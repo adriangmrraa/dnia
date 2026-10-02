@@ -37,13 +37,17 @@ function flag(name: string): string | undefined {
 
 function resolveActor(v: string | undefined): PublicKey {
   if (!v) throw new Error("falta --agent");
-  const alias = envOr(`${v.toUpperCase().replace("-", "_")}_WALLET`);
+  // envOr devuelve "" cuando no existe — "" no es nullish, hay que
+  // convertirlo a undefined para que el fallback `?? v` use el pubkey literal.
+  const alias = envOr(`${v.toUpperCase().replace("-", "_")}_WALLET`) || undefined;
   // a→AGENT_A_WALLET, b→AGENT_B_WALLET, x→X? no — servicios usan SERVICE_X_WALLET
-  const aliases: Record<string, string> = {
+  // (undefined = alias no configurado — ej. z antes de correr adopt_service.ts)
+  const aliases: Record<string, string | undefined> = {
     a: envOr("AGENT_A_WALLET"),
     b: envOr("AGENT_B_WALLET"),
     x: envOr("SERVICE_X_WALLET"),
     y: envOr("SERVICE_Y_WALLET"),
+    z: envOr("SERVICE_Z_WALLET") || undefined,
     owner: envOr("OWNER_WALLET"),
     issuer: envOr("ISSUER_WALLET"),
   };

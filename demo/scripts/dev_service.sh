@@ -28,6 +28,15 @@ case "${1:-}" in
     PAYEE_WALLET=$SERVICE_Y_WALLET PORT=${SERVICE_Y_PORT:-3403} \
       exec npx tsx services/service-x/src/index.ts
     ;;
+  z)
+    [ -n "${SERVICE_Z_WALLET:-}" ] || {
+      echo "falta SERVICE_Z_WALLET en .env — correr: npx tsx scripts/adopt_service.ts z" >&2
+      exit 1
+    }
+    echo "service-z → :${SERVICE_Z_PORT:-3405} payee=$SERVICE_Z_WALLET"
+    PAYEE_WALLET=$SERVICE_Z_WALLET PORT=${SERVICE_Z_PORT:-3405} \
+      exec npx tsx services/service-z/src/index.ts
+    ;;
   *)
-    echo "uso: dev_service.sh issuer|x|y" >&2; exit 2 ;;
+    echo "uso: dev_service.sh issuer|x|y|z" >&2; exit 2 ;;
 esac
