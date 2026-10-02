@@ -27,13 +27,15 @@ import {
 import { deserializeAttestationData } from "sas-lib";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
-// S1 — gate del scaffold: GateConfig persiste los 4 campos y solo el admin rota.
+// S1 — gate del scaffold: GateConfig persiste sus campos y solo el admin rota.
 // Los CAs CA-1..CA-12 se agregan en S2/S3/S4 sobre este mismo harness.
+// Post-verify (W1): GateConfig incluye `usdc_mint` (5to campo persistido).
 describe("agentic-gate — S1: config del gate", () => {
   let h: GateHarness;
 
   const sasCredential = Keypair.generate().publicKey;
   const sasSchema = Keypair.generate().publicKey;
+  const usdcMint = Keypair.generate().publicKey; // pubkey alcanza: se prueba persistencia
 
   let configPda: PublicKey;
 
@@ -49,11 +51,11 @@ describe("agentic-gate — S1: config del gate", () => {
     await stopGate(h);
   });
 
-  it("initialize_config persiste los 4 campos", async () => {
+  it("initialize_config persiste los 5 campos", async () => {
     const admin = h.payer.publicKey;
 
     await h.program.methods
-      .initializeConfig(admin, sasCredential, sasSchema, 1)
+      .initializeConfig(admin, sasCredential, sasSchema, usdcMint, 1)
       .rpc();
 
     const config = await h.program.account.gateConfig.fetch(configPda);
@@ -63,6 +65,7 @@ describe("agentic-gate — S1: config del gate", () => {
       sasCredential.toBase58()
     );
     assert.equal(config.sasSchema.toBase58(), sasSchema.toBase58());
+    assert.equal(config.usdcMint.toBase58(), usdcMint.toBase58());
     assert.equal(config.minLevel, 1);
   });
 
@@ -258,15 +261,6 @@ describe("agentic-gate — S3: init_mandate + pay (CA-2/3/4)", () => {
       [Buffer.from("config")],
       h.program.programId
     );
-    // Config apunta al issuer/schema SAS REALES creados por bootstrap.
-    await h.program.methods
-      .initializeConfig(
-        h.payer.publicKey,
-        sas.credential,
-        sas.schema,
-        1
-      )
-      .rpc();
 
     agentA = fundedKeypair(h);
     agentB = fundedKeypair(h);
@@ -274,6 +268,18 @@ describe("agentic-gate — S3: init_mandate + pay (CA-2/3/4)", () => {
     serviceY = fundedKeypair(h);
 
     mint = await createTestUsdc(h);
+    // Config apunta al issuer/schema SAS REALES creados por bootstrap y al
+    // mint USDC-test real (W1: `pay` exige ese mint en ambos token accounts).
+    await h.program.methods
+      .initializeConfig(
+        h.payer.publicKey,
+        sas.credential,
+        sas.schema,
+        mint,
+        1
+      )
+      .rpc();
+
     ataA = await ata(h, mint, agentA.publicKey);
     ataB = await ata(h, mint, agentB.publicKey);
     ataX = await ata(h, mint, serviceX.publicKey);
@@ -398,12 +404,17 @@ describe("agentic-gate — S3: init_mandate + pay (CA-2/3/4)", () => {
     assert.ok(m.totalSpent.eq(USDC(0.5)));
     assert.ok(m.dayIndex.gtn(0));
 
-    // Recibo en los logs con los 6 campos.
+    // Recibo en los logs con los 7 campos (W1: incluye `mint`).
     const receipt = await fetchReceipt(h, sig);
     assert.isNotNull(receipt, "no se encontró PaymentReceipt en los logs");
     assert.equal(receipt.payer.toBase58(), agentA.publicKey.toBase58());
     assert.equal(receipt.payee.toBase58(), serviceX.publicKey.toBase58());
     assert.ok(receipt.amount.eq(USDC(0.5)));
+    assert.equal(receipt.mint.toBase58(), mint.toBase58());
+    assert.deepEqual(
+      Array.from(receipt.service_ref ?? receipt.serviceRef),
+      REF("INV-X-0001")
+    );
     assert.equal(receipt.mandate.toBase58(), mandateA.toBase58());
     assert.ok(receipt.timestamp.gtn(0));
   });
@@ -474,14 +485,15 @@ describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
     service: PublicKey,
     serviceAta: PublicKey,
     mandateOverride?: PublicKey,
-    attestationOverride?: PublicKey
+    attestationOverride?: PublicKey,
+    agentAtaOverride?: PublicKey
   ) => ({
     agent: fx.kp.publicKey,
     config: configPda,
     attestation: attestationOverride ?? fx.attestation,
     mandate: mandateOverride ?? fx.mandate,
     service,
-    agentAta: fx.ata,
+    agentAta: agentAtaOverride ?? fx.ata,
     serviceAta,
     tokenProgram: TOKEN_PROGRAM_ID,
   });
@@ -491,7 +503,12 @@ describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
     amount: BN,
     service: PublicKey,
     serviceAta: PublicKey,
-    opts?: { mandate?: PublicKey; attestation?: PublicKey; ref?: string }
+    opts?: {
+      mandate?: PublicKey;
+      attestation?: PublicKey;
+      agentAta?: PublicKey;
+      ref?: string;
+    }
   ): Promise<{ sig?: string; err?: any }> => {
     try {
       const sig = await h.program.methods
@@ -502,7 +519,8 @@ describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
             service,
             serviceAta,
             opts?.mandate,
-            opts?.attestation
+            opts?.attestation,
+            opts?.agentAta
           )
         )
         .signers([fx.kp])
@@ -568,13 +586,16 @@ describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
       [Buffer.from("config")],
       h.program.programId
     );
-    await h.program.methods
-      .initializeConfig(h.payer.publicKey, sas.credential, sas.schema, 1)
-      .rpc();
 
     serviceX = fundedKeypair(h);
     serviceY = fundedKeypair(h);
     mint = await createTestUsdc(h);
+
+    // Config con issuer/schema SAS reales + mint USDC-test del gate (W1).
+    await h.program.methods
+      .initializeConfig(h.payer.publicKey, sas.credential, sas.schema, mint, 1)
+      .rpc();
+
     ataX = await ata(h, mint, serviceX.publicKey);
     ataY = await ata(h, mint, serviceY.publicKey);
 
@@ -630,6 +651,33 @@ describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
     const { err } = await tryPay(A, USDC(0.5), serviceY.publicKey, ataY);
     expectGateErr(err, "PayeeNotWhitelisted");
     assert.equal(await tokenBalance(h, ataY), yBefore);
+  });
+
+  it("CA-13 (post-verify W1): pay con mint distinto al del gate revierte WrongMint", async () => {
+    // Mint basura (mismo shape, 6 dec) + ATAs del agente y del servicio en él.
+    const fakeMint = await createTestUsdc(h);
+    const ataAFake = await ata(h, fakeMint, A.kp.publicKey);
+    await mintUsdc(h, fakeMint, ataAFake, 20_000_000n);
+    const ataXFake = await ata(h, fakeMint, serviceX.publicKey);
+
+    const xBefore = await tokenBalance(h, ataX);
+    const xFakeBefore = await tokenBalance(h, ataXFake);
+
+    // (a) el agente paga desde su ATA del mint basura → WrongMint
+    const r1 = await tryPay(A, USDC(0.5), serviceX.publicKey, ataX, {
+      agentAta: ataAFake,
+    });
+    expectGateErr(r1.err, "WrongMint");
+
+    // (b) el cobro va a una ATA del servicio en mint basura → WrongMint
+    const r2 = await tryPay(A, USDC(0.5), serviceX.publicKey, ataXFake);
+    expectGateErr(r2.err, "WrongMint");
+
+    // Atomicidad: nada se movió en ninguno de los mints y el mandato no gastó.
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+    assert.equal(await tokenBalance(h, ataXFake), xFakeBefore);
+    const m = await h.program.account.mandate.fetch(A.mandate);
+    assert.ok(m.spentToday.isZero());
   });
 
   it("CA-11: agente C firmando con el mandato de A revierte MandateBoundToOtherAgent", async () => {

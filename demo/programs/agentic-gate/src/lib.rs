@@ -24,21 +24,59 @@ pub const SECS_PER_DAY: i64 = 86_400;
 pub mod agentic_gate {
     use super::*;
 
-    /// Crea el GateConfig (PDA ["config"]) con el issuer/schema SAS confiables.
+    /// Crea el GateConfig (PDA ["config"]) con el issuer/schema SAS confiables
+    /// y el mint USDC que `pay` exige en ambos token accounts (fix W1).
     /// Una sola instancia; `init` falla si ya existe.
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
         admin: Pubkey,
         sas_credential: Pubkey,
         sas_schema: Pubkey,
+        usdc_mint: Pubkey,
         min_level: u8,
     ) -> Result<()> {
         let config = &mut ctx.accounts.config;
         config.admin = admin;
         config.sas_credential = sas_credential;
         config.sas_schema = sas_schema;
+        config.usdc_mint = usdc_mint;
         config.min_level = min_level;
         config.bump = ctx.bumps.config;
+        Ok(())
+    }
+
+    /// Cierra el GateConfig devolviendo el rent al admin. Necesario para
+    /// re-inicializar cuando crece el layout (ej. campo nuevo `usdc_mint`):
+    /// la cuenta vieja no deserializa con el struct nuevo, así que se valida
+    /// por seeds + discriminador + campo `admin` leído a bytes crudos y se
+    /// cierra manualmente. Solo para reparación/migración de la demo.
+    pub fn close_config(ctx: Context<CloseConfig>) -> Result<()> {
+        let info = ctx.accounts.config.to_account_info();
+        require!(
+            info.owner == &crate::ID && !info.data_is_empty(),
+            GateError::Unauthorized
+        );
+        {
+            let data = info.try_borrow_data()?;
+            require!(
+                data.len() >= 40 && data[..8] == *GateConfig::DISCRIMINATOR,
+                GateError::Unauthorized
+            );
+            // `admin` es el primer campo del layout (bytes 8..40 tras el disc).
+            require!(
+                data[8..40] == ctx.accounts.admin.key().to_bytes(),
+                GateError::Unauthorized
+            );
+        }
+        // Cierre manual: drenar lamports → admin, truncar y devolver a System.
+        let dest = ctx.accounts.admin.to_account_info();
+        **dest.try_borrow_mut_lamports()? = dest
+            .lamports()
+            .checked_add(info.lamports())
+            .ok_or(GateError::MathOverflow)?;
+        **info.try_borrow_mut_lamports()? = 0;
+        info.assign(&anchor_lang::solana_program::system_program::id());
+        info.resize(0)?;
         Ok(())
     }
 
@@ -209,10 +247,12 @@ pub mod agentic_gate {
         )?;
 
         // ── RECIBO observable (R-05): event-log, sin cuenta extra (D2) ──
+        // Incluye `mint` (W1): el recibo declara el activo real cobrado.
         emit!(PaymentReceipt {
             payer: ctx.accounts.agent.key(),
             payee: ctx.accounts.service.key(),
             amount,
+            mint: ctx.accounts.config.usdc_mint,
             service_ref,
             mandate: mandate.key(),
             timestamp: now,
@@ -262,6 +302,18 @@ pub struct UpdateConfig<'info> {
 }
 
 #[derive(Accounts)]
+pub struct CloseConfig<'info> {
+    /// CHECK: el GateConfig puede estar en un layout viejo que ya no
+    /// deserializa (ej. pre-`usdc_mint`) — por eso no es `Account<GateConfig>`.
+    /// La seguridad del cierre la dan: seeds del PDA + discriminador + campo
+    /// `admin` leído a bytes dentro del handler (firma el admin registrado).
+    #[account(mut, seeds = [CONFIG_SEED], bump)]
+    pub config: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
+}
+
+#[derive(Accounts)]
 #[instruction(agent: Pubkey)]
 pub struct InitMandate<'info> {
     #[account(
@@ -304,18 +356,22 @@ pub struct Pay<'info> {
     /// CHECK: wallet del servicio payee — solo identidad para la whitelist.
     pub service: UncheckedAccount<'info>,
 
-    /// ATA del agente — debe pertenecer al firmante (paga desde su ATA).
+    /// ATA del agente — debe pertenecer al firmante (paga desde su ATA) y ser
+    /// del mint USDC declarado en GateConfig (W1: un mint basura no cobra).
     #[account(
         mut,
-        constraint = agent_ata.owner == agent.key() @ GateError::AgentTokenMismatch
+        constraint = agent_ata.owner == agent.key() @ GateError::AgentTokenMismatch,
+        constraint = agent_ata.mint == config.usdc_mint @ GateError::WrongMint
     )]
     pub agent_ata: Account<'info, TokenAccount>,
 
     /// ATA del servicio — debe pertenecer a la wallet `service` para que el
-    /// check de whitelist cubra al destinatario REAL de los fondos.
+    /// check de whitelist cubra al destinatario REAL de los fondos, y ser del
+    /// mint USDC del gate (W1).
     #[account(
         mut,
-        constraint = service_ata.owner == service.key() @ GateError::ServiceTokenMismatch
+        constraint = service_ata.owner == service.key() @ GateError::ServiceTokenMismatch,
+        constraint = service_ata.mint == config.usdc_mint @ GateError::WrongMint
     )]
     pub service_ata: Account<'info, TokenAccount>,
 
@@ -358,6 +414,8 @@ pub struct GateConfig {
     pub sas_credential: Pubkey,
     /// Schema PDA esperado ("agentic-dni-human-verified" v1).
     pub sas_schema: Pubkey,
+    /// Mint USDC-test exigido en `agent_ata`/`service_ata` de `pay` (W1).
+    pub usdc_mint: Pubkey,
     /// Nivel mínimo exigido en attestation.data.level.
     pub min_level: u8,
     /// Bump del PDA ["config"].
@@ -402,6 +460,8 @@ pub struct PaymentReceipt {
     pub payee: Pubkey,
     /// Monto en unidades base USDC.
     pub amount: u64,
+    /// Mint real del pago (USDC-test del gate — W1).
+    pub mint: Pubkey,
     /// Referencia de factura/servicio (16B) provista por el pagador.
     pub service_ref: [u8; 16],
     /// PDA del mandato usado (vínculo semántico para el dashboard).
@@ -446,4 +506,6 @@ pub enum GateError {
     AgentTokenMismatch,
     #[msg("El token account destino no pertenece al servicio")]
     ServiceTokenMismatch,
+    #[msg("El token account no es del mint USDC configurado en el gate")]
+    WrongMint,
 }

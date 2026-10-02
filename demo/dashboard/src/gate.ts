@@ -201,6 +201,7 @@ export interface LedgerRow {
   payer?: string;
   payee?: string;
   amount?: string;
+  mint?: string;
   serviceRef?: string;
   err?: string;
 }
@@ -235,6 +236,8 @@ export async function fetchLedger(
           row.payer = d.payer.toBase58();
           row.payee = d.payee.toBase58();
           row.amount = (Number(d.amount.toString()) / 1_000_000).toFixed(2);
+          // W1: el recibo declara el mint real del pago.
+          row.mint = d.mint?.toBase58?.() ?? undefined;
           const ref = d.service_ref ?? d.serviceRef;
           row.serviceRef = Buffer.from(ref as number[]).toString("hex");
         }

@@ -97,16 +97,21 @@ async function main() {
       const invoiceHex = Buffer.from(
         (receipt.service_ref ?? receipt.serviceRef) as number[]
       ).toString("hex");
+      // W1: el recibo declara el mint del pago — exigir el USDC-test del gate
+      // además del constraint on-chain (defensa en profundidad del beat 3).
+      const receiptMint = receipt.mint?.toBase58?.() ?? "";
       const valid =
         receipt.payee.toBase58() === payee.toBase58() &&
+        receiptMint === mint &&
         (receipt.amount as BN).gte(price) &&
         pendingInvoices.has(invoiceHex);
 
       if (!valid) {
         res.status(402).json({
-          error: "recibo no vinculante (payee/monto/invoice)",
+          error: "recibo no vinculante (payee/mint/monto/invoice)",
           receipt: {
             payee: receipt.payee.toBase58(),
+            mint: receiptMint,
             amount: receipt.amount.toString(),
             service_ref: invoiceHex,
           },
@@ -125,6 +130,7 @@ async function main() {
           payer: receipt.payer.toBase58(),
           payee: receipt.payee.toBase58(),
           amount: receipt.amount.toString(),
+          mint: receiptMint,
           service_ref: invoiceHex,
           mandate: receipt.mandate.toBase58(),
           timestamp: Number(receipt.timestamp),

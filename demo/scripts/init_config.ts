@@ -1,9 +1,13 @@
 /**
- * S5 — `initialize_config` del gate en devnet con las direcciones SAS reales.
- * Idempotente: si GateConfig ya existe, solo la muestra.
+ * S5 — `initialize_config` del gate en devnet con las direcciones SAS reales
+ * y el mint USDC-test (post-verify W1: `usdc_mint` es campo de GateConfig).
+ * Idempotente: si GateConfig ya existe con el layout vigente, solo la muestra.
+ * Si existe con un layout viejo (no deserializa → ej. pre-`usdc_mint`), la
+ * cierra con `close_config` (reparación documentada: config de demo) y la
+ * re-inicializa — el PDA `["config"]` se conserva.
  *
  * Lee del .env: AGENTIC_GATE_PROGRAM_ID, SAS_CREDENTIAL, SAS_SCHEMA,
- * OWNER_KEYPAIR (admin + payer).
+ * USDC_MINT, OWNER_KEYPAIR (admin + payer).
  *
  * Uso (WSL, desde demo/): npx tsx scripts/init_config.ts
  */
@@ -44,21 +48,36 @@ async function main() {
 
   const existing = await conn.getAccountInfo(configPda);
   if (existing) {
-    const cfg = await program.account.gateConfig.fetch(configPda);
-    console.log("GateConfig ya inicializada:", {
-      admin: cfg.admin.toBase58(),
-      sas_credential: cfg.sasCredential.toBase58(),
-      sas_schema: cfg.sasSchema.toBase58(),
-      min_level: cfg.minLevel,
-    });
-    return;
+    try {
+      const cfg = await program.account.gateConfig.fetch(configPda);
+      console.log("GateConfig ya inicializada:", {
+        admin: cfg.admin.toBase58(),
+        sas_credential: cfg.sasCredential.toBase58(),
+        sas_schema: cfg.sasSchema.toBase58(),
+        usdc_mint: cfg.usdcMint.toBase58(),
+        min_level: cfg.minLevel,
+      });
+      return;
+    } catch {
+      // Layout viejo (ej. sin `usdc_mint`): el fetch no deserializa →
+      // cerrar la cuenta con `close_config` y re-inicializar abajo.
+      console.log(
+        "GateConfig con layout viejo — close_config + re-init (reparación demo)"
+      );
+      const closeSig = await program.methods
+        .closeConfig()
+        .accountsPartial({ config: configPda, admin: owner.publicKey })
+        .rpc();
+      console.log(`  GateConfig anterior cerrada (${closeSig})`);
+    }
   }
 
   const cred = new PublicKey(requireEnv("SAS_CREDENTIAL"));
   const schema = new PublicKey(requireEnv("SAS_SCHEMA"));
+  const usdcMint = new PublicKey(requireEnv("USDC_MINT"));
 
   const sig = await program.methods
-    .initializeConfig(owner.publicKey, cred, schema, 1)
+    .initializeConfig(owner.publicKey, cred, schema, usdcMint, 1)
     .accountsPartial({
       config: configPda,
       payer: owner.publicKey,
@@ -70,6 +89,7 @@ async function main() {
   console.log(`  config     ${configPda.toBase58()}`);
   console.log(`  credential ${cred.toBase58()}`);
   console.log(`  schema     ${schema.toBase58()}`);
+  console.log(`  usdc_mint  ${usdcMint.toBase58()}`);
   console.log(
     `  explorer   https://explorer.solana.com/tx/${sig}?cluster=devnet`
   );
