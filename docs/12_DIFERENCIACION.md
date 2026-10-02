@@ -105,11 +105,20 @@ liability sin ancla.
   fortalece ofreciendo rails con accountability.
 - **Owner:** firma un mandato y su agente es aceptado en todos los
   servicios gateados — la credencial es su "costo de existir".
-- **Regulación:** Filipinas HB 11014, Brasil PL 974/2026 y el draft US AI
-  AGENT Act ya proponen exactamente esto (credencial verificable
-  criptográficamente, binding a persona jurídica). Es tailwind, no motor:
-  el producto funciona por incentivos económicos hoy; si la ley llega, la
-  capa ya está corriendo.
+
+**No es un proyecto regulatorio — es lo contrario.** La tesis es que el
+ecosistema puede resguardarse **solo**, por incentivos de mercado: un
+merchant exige humano verificado porque quiere no ser estafado, no porque
+una ley se lo mande. Accountability sin esperar al Estado — opt-in, open,
+sin permiso de nadie.
+
+Que Filipinas (HB 11014), Brasil (PL 974/2026) y el draft US AI AGENT Act
+estén redactando exactamente esto se usa en el pitch solo como **evidencia
+de que el problema es real** — tres jurisdicciones llegaron a la misma
+conclusión de forma independiente. Pero si esa regulación nunca llega, el
+producto funciona igual: la demanda es económica y presente. Y si llega, la
+capa open-source ya está corriendo — mejor que la construya el ecosistema
+a que la imponga un monopolio o un registro estatal cerrado.
 
 ## 6. Honestidad de scope (lo que NO decimos)
 

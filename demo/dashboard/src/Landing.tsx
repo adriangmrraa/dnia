@@ -85,8 +85,8 @@ const WHY_NOW = [
     v: "Skyfire hace KYA con JWTs verificables solo contra sus claves: no consumible por programas on-chain y muere con la empresa. Nosotros somos abiertos e issuer-agnósticos.",
   },
   {
-    k: "La regulación ya se redacta",
-    v: "Filipinas HB 11014, Brasil PL 974/2026, US AI AGENT Act — tailwind, no dependencia: el enforcement económico resuelve fraude y liability hoy.",
+    k: "La regulación lo confirma",
+    v: "Filipinas HB 11014, Brasil PL 974/2026, US AI AGENT Act — prueba de que el problema es real. Pero el ecosistema no espera a la ley: el enforcement económico resuelve fraude y liability hoy, opt-in y sin permiso de nadie.",
   },
   {
     k: "El vacío está verificado",
