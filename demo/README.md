@@ -19,7 +19,30 @@ cd dashboard && npx vite --port 3404  # dashboard read-only → http://localhost
 ```
 
 Los servicios corren en foreground-managed shells (WSL1 mata procesos
-background al cerrar la sesión — `scripts/dev_service.sh` los envuelve).
+background al cerrar la sesión — `scripts/dev_service.sh` los envuelve;
+`issuer|x|y|z`).
+
+El dashboard es ahora un sitio multi-página (misma app Vite+React, router
+client-side sin dependencias): `/` landing (pitch + evidencia devnet),
+`/dashboard` auditoría/adopción en vivo, `/docs` guía de adopción, `/demo`
+runbook con estado de servicios en vivo, `/colaborar` cómo contribuir
+(Apache-2.0). En `/dashboard`, dos tabs: **Auditoría** (attestation/mandato/
+ledger en criollo — PAGO ACEPTADO / PAGO RECHAZADO con el GateError) y
+**Adopción** (el snippet literal de integración + los servicios adoptantes
+en vivo, via proxy `/svc/*` de vite).
+
+## Beat de adopción — cero fricción
+
+```bash
+bash scripts/demo_adoption.sh   # service-z (:3405) se suma al gate en vivo
+```
+
+Un servicio NUEVO queda gate-protected agregando solo `createGate` +
+402/verify (`services/gate-check.ts`): sin cuenta, sin API key, sin
+permiso. El script muestra el 402, el revert `PayeeNotWhitelisted`
+on-chain (el owner decide, no el servicio), la whitelist por
+`init_mandate` y el pago 200. Para dejarlo corriendo:
+`bash scripts/dev_service.sh z`.
 
 ## Guion ~90 segundos (6 beats)
 

@@ -29,12 +29,14 @@ export interface DemoConfig {
   rpcUrl: string;
   programId: PublicKey;
   owner: PublicKey;
+  issuer?: PublicKey;
   agents: { label: string; wallet: PublicKey }[];
   sasCredential: PublicKey;
   sasSchema: PublicKey;
   mint: PublicKey;
   serviceX: PublicKey;
   serviceY: PublicKey;
+  serviceZ?: PublicKey;
 }
 
 function env(k: string, fallback = ""): string {
@@ -47,6 +49,7 @@ export function loadConfig(): DemoConfig {
     rpcUrl: env("RPC_URL", "https://api.devnet.solana.com"),
     programId: pk(env("PROGRAM_ID")),
     owner: pk(env("OWNER_WALLET")),
+    issuer: env("ISSUER_WALLET") ? pk(env("ISSUER_WALLET")) : undefined,
     agents: [
       { label: "Agente A", wallet: pk(env("AGENT_A_WALLET")) },
       { label: "Agente B", wallet: pk(env("AGENT_B_WALLET")) },
@@ -56,6 +59,9 @@ export function loadConfig(): DemoConfig {
     mint: pk(env("USDC_MINT")),
     serviceX: pk(env("SERVICE_X_WALLET")),
     serviceY: pk(env("SERVICE_Y_WALLET")),
+    serviceZ: env("SERVICE_Z_WALLET")
+      ? pk(env("SERVICE_Z_WALLET"))
+      : undefined,
   };
 }
 
@@ -63,6 +69,50 @@ export const explorerTx = (sig: string) =>
   `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 export const explorerAddr = (addr: PublicKey | string) =>
   `https://explorer.solana.com/address/${addr.toString()}?cluster=devnet`;
+
+// ── GateConfig (PDA ["config"]) — qué issuer/mint/nivel exige el gate ──
+
+export function configPda(programId: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("config")],
+    programId
+  )[0];
+}
+
+export interface GateConfigView {
+  pda: PublicKey;
+  exists: boolean;
+  admin?: string;
+  sasCredential?: string;
+  sasSchema?: string;
+  usdcMint?: string;
+  minLevel?: number;
+}
+
+/** snake_case del IDL con fallback camel — mismo truco que fetchMandate. */
+const field = (m: any) => (k: string) =>
+  m[k] ?? m[k.replace(/_([a-z])/g, (_: any, c: string) => c.toUpperCase())];
+
+export async function fetchGateConfig(
+  conn: Connection,
+  programId: PublicKey
+): Promise<GateConfigView> {
+  const pda = configPda(programId);
+  const info = await conn.getAccountInfo(pda);
+  if (!info) return { pda, exists: false };
+  const coder = new BorshAccountsCoder(idl as Idl);
+  const c: any = coder.decode("GateConfig", info.data);
+  const f = field(c);
+  return {
+    pda,
+    exists: true,
+    admin: c.admin.toBase58(),
+    sasCredential: f("sas_credential").toBase58(),
+    sasSchema: f("sas_schema").toBase58(),
+    usdcMint: f("usdc_mint").toBase58(),
+    minLevel: Number(f("min_level")),
+  };
+}
 
 // ── Mandate ────────────────────────────────────────────────────────────
 
@@ -114,7 +164,7 @@ export async function fetchMandate(
   const coder = new BorshAccountsCoder(idl as Idl);
   const m: any = coder.decode("Mandate", info.data);
   // El IDL conserva snake_case; los eventos/account decoders NO renombran a camel.
-  const f = (k: string) => m[k] ?? m[k.replace(/_([a-z])/g, (_: any, c: string) => c.toUpperCase())];
+  const f = field(m);
   const usdc = (v: BN) => (Number(v.toString()) / 1_000_000).toFixed(2);
   const now = Math.floor(Date.now() / 1000);
   const expiry = Number(f("expiry").toString());
@@ -198,12 +248,27 @@ export interface LedgerRow {
   slot: number;
   time: number | null;
   kind: "pago" | "otra-ix" | "fallida";
+  /** Instrucción anchor del gate que corrió la tx (Pay, InitMandate…). */
+  ixName?: string;
+  /** Nombre del GateError cuando la tx falló (AttestationMissing…). */
+  errName?: string;
   payer?: string;
   payee?: string;
   amount?: string;
   mint?: string;
   serviceRef?: string;
   err?: string;
+}
+
+/** code → name según el IDL (GateError 6000+). */
+const ERROR_BY_CODE = new Map<number, string>(
+  ((idl as any).errors ?? []).map((e: any) => [e.code, e.name])
+);
+
+/** Nombre del error `custom` de un TransactionError serializado. */
+function errorNameFromTxErr(err: unknown): string | undefined {
+  const m = JSON.stringify(err ?? {}).match(/"Custom"\s*:\s*(\d+)/);
+  return m ? ERROR_BY_CODE.get(Number(m[1])) : undefined;
 }
 
 export async function fetchLedger(
@@ -228,8 +293,26 @@ export async function fetchLedger(
         commitment: "confirmed",
         maxSupportedTransactionVersion: 0,
       });
-      if (tx?.meta?.err) row.kind = "fallida";
-      for (const ev of parser.parseLogs(tx?.meta?.logMessages ?? [])) {
+      const logs = tx?.meta?.logMessages ?? [];
+      if (tx?.meta?.err) {
+        row.kind = "fallida";
+        row.errName = errorNameFromTxErr(tx.meta.err) ?? undefined;
+      }
+      // Legibilidad: qué instrucción del gate corrió (y qué GateError tiró
+      // cuando falló) — los logs ya están bajados, solo hay que leerlos.
+      const gid = programId.toBase58();
+      let inGate = false;
+      for (const line of logs) {
+        if (line.startsWith(`Program ${gid} invoke`)) inGate = true;
+        else if (line.startsWith(`Program ${gid} `)) inGate = false;
+        if (inGate && !row.ixName) {
+          const ixm = line.match(/Instruction: (\w+)/);
+          if (ixm) row.ixName = ixm[1];
+        }
+        const ecm = line.match(/Error Code: (\w+)/);
+        if (ecm && !row.errName) row.errName = ecm[1];
+      }
+      for (const ev of parser.parseLogs(logs)) {
         if (ev.name === "paymentReceipt" || ev.name === "PaymentReceipt") {
           const d: any = ev.data;
           row.kind = "pago";
