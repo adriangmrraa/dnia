@@ -5,4 +5,5 @@ set -uo pipefail
 pkill -f "tsx services/issuer/src/index.ts" 2>/dev/null && echo "issuer frenado" || true
 pkill -f "tsx services/service-x/src/index.ts" 2>/dev/null && echo "service-x/y frenados" || true
 pkill -f "tsx services/service-z/src/index.ts" 2>/dev/null && echo "service-z frenado" || true
+pkill -f "tsx services/demo-runner/src/index.ts" 2>/dev/null && echo "demo-runner frenado" || true
 exit 0

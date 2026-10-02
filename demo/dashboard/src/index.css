@@ -134,6 +134,14 @@ section { scroll-margin-top: 4rem; }
 .license-badge { background: #23863633; color: #3fb950; border-radius: 99px; padding: 0.1rem 0.6rem; font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
 .repo-pending { color: #d29922; font-size: 0.85rem; }
 
+/* ── run panel (/demo — demo-runner :3406) ── */
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.runbar { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 0.4rem 0 0.2rem; }
+.term { background: #010409; border: 1px solid #30363d; border-radius: 8px; padding: 0.7rem 0.9rem; overflow: auto; max-height: 22rem; font-family: ui-monospace, monospace; font-size: 0.75rem; line-height: 1.45; white-space: pre-wrap; word-break: break-all; color: #c9d1d9; margin: 0.6rem 0 0; }
+.siglist { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.siglist li { margin: 0.15rem 0; }
+.siglist a { font-family: ui-monospace, monospace; font-size: 0.75rem; }
+
 /* ── responsive ── */
 @media (max-width: 700px) {
   .grid { grid-template-columns: 1fr; }

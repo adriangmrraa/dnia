@@ -4,7 +4,7 @@
  * Si los servicios no están levantados los chips muestran "offline" y la
  * página sigue funcionando — todo lo estático se ve igual.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "./router";
 import { BEATS, PROGRAM_ID, explorerAddr, explorerTx, short } from "./site";
 
@@ -46,6 +46,13 @@ const SERVICES: ServiceProbe[] = [
     path: "/health",
     desc: "adoptante del beat demo_adoption.sh — opcional, se levanta en vivo",
   },
+  {
+    key: "runner",
+    label: "Demo runner",
+    port: 3406,
+    path: "/health",
+    desc: "ejecuta run_beats.sh a pedido del botón ▶ — POST /run, streamea el output",
+  },
 ];
 
 interface Health {
@@ -54,7 +61,7 @@ interface Health {
   price?: string;
 }
 
-const COMMANDS = `bash scripts/start_services.sh        # issuer :3401 · service-x :3402 · service-y :3403
+const COMMANDS = `bash scripts/start_services.sh        # issuer :3401 · x :3402 · y :3403 · runner :3406
 bash scripts/sync_dashboard_env.sh    # genera dashboard/.env (solo pubkeys)
 cd dashboard && npx vite --port 3404 --host   # este sitio → http://localhost:3404
 bash scripts/run_beats.sh             # los 6 beats encadenados, verifica cada uno
@@ -93,9 +100,37 @@ const BEAT_GUIDE = [
   },
 ];
 
+/** Resultado que manda el runner en la línea final `__RESULT__{json}`. */
+interface RunResult {
+  ok: boolean;
+  exitCode: number | null;
+  output?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  timedOut?: boolean;
+  error?: string;
+}
+
+interface RunState {
+  phase: "idle" | "running" | "done" | "error";
+  output: string;
+  result: RunResult | null;
+  /** Nota humana (409, runner caído, stream cortado). */
+  note?: string;
+}
+
+/** Signature devnet = base58 de ~88 chars — mismo criterio que sigline() del script. */
+const SIG_RE = /[1-9A-HJ-NP-Za-km-z]{80,90}/g;
+
 export default function DemoPage() {
   const [health, setHealth] = useState<Record<string, Health>>({});
   const [checked, setChecked] = useState(false);
+  const [run, setRun] = useState<RunState>({
+    phase: "idle",
+    output: "",
+    result: null,
+  });
+  const termRef = useRef<HTMLPreElement>(null);
 
   const probe = useCallback(() => {
     for (const s of SERVICES) {
@@ -118,6 +153,87 @@ export default function DemoPage() {
   useEffect(() => {
     probe();
   }, [probe]);
+
+  // La terminal sigue el output mientras corre.
+  useEffect(() => {
+    termRef.current?.scrollTo({ top: termRef.current.scrollHeight });
+  }, [run.output]);
+
+  /**
+   * POST /svc/runner/run → stream text/plain del run_beats.sh en vivo.
+   * El runner cierra el stream con una línea `__RESULT__` + JSON (resumen).
+   */
+  const runDemo = useCallback(async () => {
+    setRun({ phase: "running", output: "", result: null });
+    try {
+      const res = await fetch("/svc/runner/run", { method: "POST" });
+      if (res.status === 409) {
+        const j = await res.json().catch(() => ({}));
+        setRun({
+          phase: "error",
+          output: "",
+          result: null,
+          note: `Ya hay una corrida en curso (desde ${j.startedAt ?? "?"}). Esperá a que termine.`,
+        });
+        return;
+      }
+      if (!res.ok || !res.body) {
+        const t = await res.text().catch(() => "");
+        setRun({
+          phase: "error",
+          output: "",
+          result: null,
+          note: `El runner respondió ${res.status}: ${t.slice(0, 200)}`,
+        });
+        return;
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let text = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += dec.decode(value, { stream: true });
+        setRun((r) => ({ ...r, output: text }));
+      }
+      text += dec.decode();
+      const i = text.lastIndexOf("\n__RESULT__");
+      let result: RunResult | null = null;
+      let shown = text;
+      if (i >= 0) {
+        shown = text.slice(0, i);
+        try {
+          result = JSON.parse(text.slice(i + 11).trim()) as RunResult;
+        } catch {
+          /* stream cortado a mitad del sentinel */
+        }
+      }
+      setRun({
+        phase: "done",
+        output: shown,
+        result,
+        note: result
+          ? undefined
+          : "el stream terminó sin resumen — ¿se cortó la conexión?",
+      });
+    } catch (e) {
+      setRun((r) => ({
+        phase: "error",
+        output: r.output,
+        result: null,
+        note: `No se pudo hablar con el runner (${String(e)}) — ¿está corriendo? bash scripts/dev_service.sh runner`,
+      }));
+    }
+  }, []);
+
+  // Signatures detectadas en el output (dedup, en orden de aparición).
+  const runSigs = useMemo(() => {
+    const seen = new Set<string>();
+    for (const m of run.output.matchAll(SIG_RE)) seen.add(m[0]);
+    return [...seen];
+  }, [run.output]);
+
+  const runnerOffline = health["runner"]?.online === false;
 
   return (
     <main className="wrap">
@@ -195,6 +311,80 @@ export default function DemoPage() {
           fallidas) sigue verificable en el explorer porque vive en devnet,
           no en estos procesos.
         </p>
+      </section>
+
+      {/* ── Correr la demo desde acá ── */}
+      <section>
+        <h2 className="sect">Correrla ahora — un click, devnet real</h2>
+        <div className="card">
+          <p className="plain">
+            El botón ejecuta <code>bash scripts/run_beats.sh</code> de verdad,
+            vía el servicio <code>demo-runner</code> (:3406): los 6 beats
+            encadenados con <b>transacciones reales en devnet</b> — incluidos
+            los reverts intencionados que quedan grabados on-chain como txs
+            fallidas con signature (~90s). Necesita issuer + X + Y arriba —
+            mirá el estado de acá arriba.
+          </p>
+          <div className="runbar">
+            <button
+              className="btn primary"
+              onClick={runDemo}
+              disabled={run.phase === "running" || runnerOffline}
+            >
+              {run.phase === "running"
+                ? "● corriendo beats…"
+                : "▶ Correr demo (devnet real)"}
+            </button>
+            {run.phase === "done" && run.result && (
+              <span className={`verdict ${run.result.ok ? "ok" : "bad"}`}>
+                {run.result.ok
+                  ? "LOS 6 BEATS OK"
+                  : `terminó con exit ${run.result.exitCode ?? "?"}`}
+              </span>
+            )}
+            {run.phase === "error" && (
+              <span className="verdict bad">no corrió</span>
+            )}
+          </div>
+          {runnerOffline && (
+            <p className="note">
+              el runner está offline — en WSL, parado en <code>demo/</code>:{" "}
+              <code>bash scripts/dev_service.sh runner</code> (o lo levanta{" "}
+              <code>scripts/start_services.sh</code>).
+            </p>
+          )}
+          {run.note && <p className="note">{run.note}</p>}
+          {(run.phase !== "idle" || run.output) && (
+            <pre ref={termRef} className="term">
+              {run.output || "arrancando…"}
+            </pre>
+          )}
+          {runSigs.length > 0 && (
+            <div className="sm" style={{ marginTop: "0.6rem" }}>
+              <b>Signatures de esta corrida</b> — abren el explorer devnet:
+              <ul className="siglist">
+                {runSigs.map((s) => (
+                  <li key={s}>
+                    <a
+                      href={explorerTx(s)}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={s}
+                    >
+                      {s}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="note">
+            Re-correr es seguro: el script es idempotente — la attestation se
+            reusa (beat 1) y si el mandato quedó revocado por el beat 6 de la
+            corrida anterior, el beat 2 hace close + re-init. Lo que imprime
+            el script es lo que pasó en la chain, sin edición.
+          </p>
+        </div>
       </section>
 
       {/* ── Comandos ── */}

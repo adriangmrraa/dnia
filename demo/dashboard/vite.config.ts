@@ -27,6 +27,10 @@ export default defineConfig({
         target: "http://localhost:3405",
         rewrite: (p) => p.replace(/^\/svc\/z/, ""),
       },
+      "/svc/runner": {
+        target: "http://localhost:3406",
+        rewrite: (p) => p.replace(/^\/svc\/runner/, ""),
+      },
     },
   },
 });

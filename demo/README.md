@@ -13,14 +13,31 @@ Nada de mainnet, nada de PII on-chain, nada de fondos reales.
 ## Levantar la demo (WSL, desde `demo/`)
 
 ```bash
-bash scripts/start_services.sh        # issuer :3401 · servicio X :3402 · servicio Y :3403
+bash scripts/start_services.sh        # issuer :3401 · X :3402 · Y :3403 · runner :3406
 bash scripts/sync_dashboard_env.sh    # genera dashboard/.env (solo pubkeys)
 cd dashboard && npx vite --port 3404  # dashboard read-only → http://localhost:3404
 ```
 
 Los servicios corren en foreground-managed shells (WSL1 mata procesos
 background al cerrar la sesión — `scripts/dev_service.sh` los envuelve;
-`issuer|x|y|z`).
+`issuer|x|y|z|runner`).
+
+### Un click desde el sitio (`/demo`)
+
+Con el `demo-runner` (:3406) levantado, la página `/demo` tiene el botón
+**▶ Correr demo (devnet real)**: hace `POST /svc/runner/run` → el runner
+ejecuta `bash scripts/run_beats.sh` de verdad (cwd `demo/`, env de `.env`)
+y streamea stdout+stderr — la página lo muestra en una terminal en vivo y,
+al terminar, linkea cada signature detectada al explorer devnet.
+
+- `POST /run` → `text/plain` chunked; última línea `__RESULT__` + JSON
+  `{ok, exitCode, output, startedAt, finishedAt}`. **409** si ya hay una
+  corrida en curso; timeout 6 min; si el cliente corta, mata el árbol de
+  procesos (no quedan beats huérfanos).
+- `GET /health` → `{ok, running}` — habilita/deshabilita el botón.
+- Ojo: dispara **txs reales en devnet** (~40-90s). Re-correr es seguro: el
+  script es idempotente (attestation se reusa; si el mandato quedó revocado
+  por el beat 6 anterior, el beat 2 hace close + re-init).
 
 El dashboard es ahora un sitio multi-página (misma app Vite+React, router
 client-side sin dependencias): `/` landing (pitch + evidencia devnet),

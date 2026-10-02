@@ -8,6 +8,7 @@
 #   bash scripts/dev_service.sh issuer   # :3401 mock issuer SAS
 #   bash scripts/dev_service.sh x        # :3402 servicio gateado (payee X)
 #   bash scripts/dev_service.sh y        # :3403 servicio gateado (payee Y)
+#   bash scripts/dev_service.sh runner   # :3406 corre run_beats.sh desde /demo
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -37,6 +38,10 @@ case "${1:-}" in
     PAYEE_WALLET=$SERVICE_Z_WALLET PORT=${SERVICE_Z_PORT:-3405} \
       exec npx tsx services/service-z/src/index.ts
     ;;
+  runner)
+    echo "demo-runner → :${DEMO_RUNNER_PORT:-3406}"
+    exec npx tsx services/demo-runner/src/index.ts
+    ;;
   *)
-    echo "uso: dev_service.sh issuer|x|y|z" >&2; exit 2 ;;
+    echo "uso: dev_service.sh issuer|x|y|z|runner" >&2; exit 2 ;;
 esac

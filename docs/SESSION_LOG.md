@@ -268,3 +268,21 @@ Plantilla: fecha | meta | máquina y acceso real | archivos revisados | tareas e
 - **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
 - **Siguiente acción (humana):** idem s20 + publicar repo → setear `GITHUB_REPO_URL`.
 - **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 22 — 02/10/2026 (post-archive — demo one-click desde /demo)
+
+- **Meta:** que el guion de 6 beats se pueda correr con un botón desde el sitio `/demo` — sin dejar la evidencia fake: el botón dispara `run_beats.sh` REAL (devnet) y la página muestra el output en vivo + links al explorer.
+- **Máquina y acceso real:** LOCAL_USER, Windows 10; toolchain vía `wsl -d Ubuntu -- bash -lc`; working copy `~/agentic-dni-demo` (sync `wsl_sync.sh push`).
+- **Implementado:**
+  - `demo/services/demo-runner/` (nuevo workspace `@demo/demo-runner`, :3406): express + `child_process.spawn`. `GET /health` → `{ok, running}`; `POST /run` → streamea stdout+stderr de `bash scripts/run_beats.sh` (cwd `demo/`, env `.env`) como `text/plain` chunked; línea final `__RESULT__` + JSON `{ok, exitCode, output, startedAt, finishedAt}` (stream + resumen, ambos). 409 si hay corrida en curso; timeout 6 min (RUNNER_TIMEOUT_MS); `detached:true` + `kill(-pid)` para matar el árbol (bash+tsx+curl) si el cliente corta el stream — sin beats huérfanos.
+  - Lifecycle: `dev_service.sh runner` (nuevo case), `start_services.sh` lo levanta + readiness pasa a 4 servicios, `stop_services.sh` lo mata, `.env.example` + `DEMO_RUNNER_PORT=3406`.
+  - UI (`dashboard/src/DemoPage.tsx`): sección "Correrla ahora — un click, devnet real" con botón primario `▶ Correr demo (devnet real)` → `POST /svc/runner/run` (proxy vite nuevo `/svc/runner`→:3406), terminal en vivo (`pre.term`, autoscroll, parse del sentinel `__RESULT__`), verdict ok/bad al terminar, signatures detectadas (regex base58 80-90, dedup) linkeadas a `explorer.solana.com/tx/<sig>?cluster=devnet`. Runner como 5º chip de estado; botón deshabilitado + instrucción `dev_service.sh runner` si está offline; nota de re-corrida idempotente. Honestidad explícita: el label dice que ejecuta txs REALES en devnet.
+  - `index.css`: `.term` (terminal oscura mono), `.runbar`, `.siglist`, `button:disabled`.
+- **Verificación E2E real (WSL):** runner levantado con `dev_service.sh`-equivalente; `POST /run` directo → stream + `__RESULT__{"ok":true,"exitCode":0}` (~41s); 2º POST concurrente → **409**; `/health` reporta `running` durante la corrida; **abort de cliente mata el árbol** (log `[runner] cliente desconectado — matando corrida`, cero procesos `run_beats` residuales); `POST /svc/runner/run` a través del proxy vite :3404 → 6/6 beats OK, 6 signatures únicas extraídas del output. `npx tsc --noEmit` raíz = baseline idéntico (1 error preexistente import.meta gate.ts:43); `tsc --noEmit` dashboard limpio; `npx vite build` OK (123 módulos). Sigs de la corrida proxy: pay `5RVngjPa…`, revokes/fallidas `3UXKs3aP…` `21aosurh…` `3hTvXEUh…` `25yUA8Lg…` `eTGcYepB…`.
+- **Bugs/gotchas encontrados:** (1) `child.kill(SIGTERM)` solo alcanza al bash — sus hijos (`npx tsx`, `curl` en command-substitution) quedan huérfanos → fix `detached:true` + kill de grupo `kill(-pid)` con escalada SIGKILL. (2) `res.on("close")` del lado express SÍ dispara en abort de cliente (repro aislado verificado) — el hueco era el kill individual, no el evento. (3) `pkill -f <patrón>` matchea el propio `bash -lc` que lo contiene — self-kill silencioso (exit 15/9); en tests usar scripts archivo o pgrep con grep -v.
+- **Idempotencia confirmada en vivo:** 2da corrida con mandato revocado → beat 2 hace close+re-init solo (`mandato cerrado` + `mandato creado`); beat 1 reusa attestation (`"existing":true`). No necesita reset step.
+- **Docs:** `demo/README.md` (sección "Un click desde el sitio"), SESSION_LOG s22, PROJECT_STATE.
+- **NO tocado:** programa on-chain, servicios existentes, `run_beats.sh` (el runner lo ejecuta tal cual — el output es la verdad on-chain).
+- **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
+- **Siguiente acción (humana):** idem s21 (entregas hackathon, video, facilitator). El botón sirve para grabar el video sin tipear.
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
