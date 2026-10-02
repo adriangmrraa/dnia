@@ -1,0 +1,22 @@
+# Secretos y material sensible — INV-5 (nunca commitear)
+keys/*
+!keys/.gitkeep
+.env
+.env.local
+**/*-keypair.json
+**/keypair*.json
+**/id.json
+
+# Build artifacts (se regeneran con anchor build en WSL)
+target/
+.anchor/
+test-ledger/
+.surfpool/
+
+# Node
+node_modules/
+dist/
+
+# SO
+.DS_Store
+*.log

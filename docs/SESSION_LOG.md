@@ -134,3 +134,14 @@ Plantilla: fecha | meta | máquina y acceso real | archivos revisados | tareas e
 - **Bloqueos:** Engram MCP sigue caído → `mem_save` omitido, fallback Markdown (registrado según protocolo).
 - **Siguiente acción:** usuario revisa `tasks.md` + `test-plan.md` y aprueba el primer slice **S1** → fase `apply` (TDD, slice-by-slice, commits convencionales en español).
 - **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 14 — 02/10/2026
+
+- **Meta:** ejecutar fase **APPLY** del change `agentic-dni` — slice **S1** (scaffold `demo/` + pipeline WSL + `GateConfig`), despachada tras aprobación humana explícita ("implement slices S1→S8 in order").
+- **Máquina y acceso real:** LOCAL_USER, Windows 10; toda la ejecución Solana en WSL Ubuntu (`wsl -d Ubuntu -- bash -lc`), workspace `~/agentic-dni-demo` sincronizado con `demo/scripts/wsl_sync.sh` (repo Windows = fuente de verdad).
+- **Tareas ejecutadas:** (1) `git init` del repo + commit baseline `bd73b9d`; (2) scaffold `demo/` completo (Anchor.toml, Cargo.toml workspace, package.json, .gitignore, .env.example, programs/agentic-gate, tests, scripts); (3) `initialize_config` + `update_config` (admin-only) + `GateConfig` PDA `["config"]` + `GateError` skeleton; (4) dump SAS devnet OK → `tests/fixtures/sas.so` (135.680 bytes); (5) diagnóstico validator + decisión de fallback (ver abajo); (6) harness `tests/helpers/surfnet.ts` + tests S1; (7) docs append (DECISIONS/STATUS/PROJECT_STATE/tasks).
+- **Comandos/resultados (literales):** `anchor build` → `Finished release/test profile` sin errores (artefactos: `target/deploy/agentic_gate.so`, `target/idl/agentic_gate.json`); `solana program dump 22zoJM… /tmp/sas.so --url devnet` → OK; `anchor test --validator legacy` → **FALLA entorno** `broadcast multi_bind: AddrInUse` (WSL1 no emula SO_REUSEPORT — sin proceso conflictivo; verificado `netstat`/exclusiones); `solana-test-validator.exe` Windows → **FALLA** `Os { code: 1314 }` privilegio; `anchor test --skip-local-validator --skip-deploy` (npm test) → **3 passing (1s)**: init persiste 4 campos, non-admin `update_config` revierte `Unauthorized` sin mutar estado, admin rota campos. Programa: `D8pcKtezTzhVA6fw2SLpyFP5wY1DfUiPJCVmeqqX1xG2`.
+- **Pruebas y resultado:** S1 VERDE — `anchor build` + `anchor test` OK en WSL con evidencia registrada.
+- **Decisiones (append en DECISIONS.md):** (a) corrección factual SAS — discriminador `Attestation`=0, `Schema`=2, revocación=`CloseAttestation` (borra cuenta); (b) test stack local = **surfpool embebido** (LiteSVM real + JSON-RPC) por bloqueo ambiental de test-validator — mantiene runtime SVM real y la ruta `--skip-local-validator` prevista en test-plan como fallback.
+- **Bloqueos:** ninguno activo. Engram MCP sigue caído → persistencia Markdown.
+- **Siguiente acción:** S2 — helpers SAS/token + smoke attestation sobre el surfnet (deploy de `tests/fixtures/sas.so` por `soPath`).

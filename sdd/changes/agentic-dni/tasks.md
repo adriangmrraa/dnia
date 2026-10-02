@@ -25,11 +25,12 @@ S2 se adelanta a cualquier código de `pay` porque es el mayor riesgo técnico (
 
 Workspace Anchor compilable + cadena build/test en WSL probada de punta a punta (deriva el mayor riesgo de tooling).
 
-- [ ] Crear `demo/`: `Anchor.toml`, `Cargo.toml` (workspace), `package.json` (workspaces TS), `.gitignore` (`keys/`, `.env`, `target/`, `node_modules`), `.env.example`.
-- [ ] `programs/agentic-gate/{Cargo.toml,src/lib.rs}`: `initialize_config(admin, sas_credential, sas_schema, min_level)` + `update_config` (solo admin) + cuenta `GateConfig` (PDA `["config"]`) + skeleton `GateError`.
-- [ ] `scripts/wsl_sync.sh`: sync `demo/` → `~/agentic-dni-demo` en WSL (sin `target/`) y de vuelta fuentes + `target/idl/*.json` + `target/deploy/*.so`.
-- [ ] `tests/agentic-gate.ts` smoke: `initialize_config` persiste los 4 campos; `update_config` con non-admin revierte.
+- [x] Crear `demo/`: `Anchor.toml`, `Cargo.toml` (workspace), `package.json` (workspaces TS), `.gitignore` (`keys/`, `.env`, `target/`, `node_modules`), `.env.example`.
+- [x] `programs/agentic-gate/{Cargo.toml,src/lib.rs}`: `initialize_config(admin, sas_credential, sas_schema, min_level)` + `update_config` (solo admin) + cuenta `GateConfig` (PDA `["config"]`) + skeleton `GateError`.
+- [x] `scripts/wsl_sync.sh`: sync `demo/` → `~/agentic-dni-demo` en WSL (sin `target/`) y de vuelta fuentes + `target/idl/*.json` + `target/deploy/*.so`.
+- [x] `tests/agentic-gate.ts` smoke: `initialize_config` persiste los 4 campos; `update_config` con non-admin revierte.
 - **Aceptación:** `anchor build` y `anchor test` verdes en WSL; GateConfig legible on-chain con campos exactos.
+- **Evidencia (02/10/2026, WSL):** `anchor build` → `Finished release/test profiles` sin errores; `anchor test --skip-local-validator --skip-deploy` → `3 passing (1s)` (init persiste campos, non-admin revierte `Unauthorized` sin tocar estado, admin rota). **Desviación documentada** (`docs/DECISIONS.md`): `solana-test-validator` no arranca en WSL1 (`multi_bind`→SO_REUSEPORT→EADDRINUSE) ni en Windows (Os 1314 privilegio); los tests corren sobre **surfpool embebido** (`@solana/surfpool` npm → LiteSVM real + JSON-RPC) levantado en `before()` por `tests/helpers/surfnet.ts`, con deploy del `.so` por ruta — equivalente al `[[test.genesis]]` planificado.
 - **Cubre:** R-09 (estructura repo), R-10/INV-5 (gitignore keys/.env), base de R-01.
 
 ## S2 — SAS dumpeado en test-validator + helpers de test

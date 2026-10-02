@@ -1,0 +1,4 @@
+# Scripts que corren dentro de WSL — forzar LF (CRLF rompe bash).
+*.sh text eol=lf
+# Binarios del validator — nunca normalizar.
+*.so binary
