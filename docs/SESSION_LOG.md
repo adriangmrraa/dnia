@@ -1,0 +1,136 @@
+# Bitácora de sesiones (append-only)
+
+Plantilla: fecha | meta | máquina y acceso real | archivos revisados | tareas ejecutadas | pruebas y resultado | decisiones/permiso | bloqueos | siguiente acción y responsable | Engram topic_key (si hubo).
+
+## Sesión 1 — 01/10/2026
+
+- **Meta:** iniciar hackathon — diagnóstico de entorno + comenzar investigación de la idea.
+- **Máquina y acceso real:** LOCAL_USER, Windows 10 + Git Bash, lectura/escritura verificadas en la carpeta del proyecto.
+- **Archivos revisados:** AGENTS.md, CLAUDE.md, PROJECT_STATE.md, PROMPT_DE_INICIO.md, README_PRIMERO.md, harness/INSTALLATION_GUIDE.md, .agents/skills/formosa-sdd-init, formosa-sdd-explore, formosa-sdd-research-gate; repo externo This-is-my-harness (árbol, README, doc de producto, git log — solo lectura).
+- **Tareas ejecutadas:** inventario de herramientas no destructivo; diagnóstico volcado a docs/ENVIRONMENT.md; idea registrada en docs/01_IDEATION.md; primera pasada de market research (3×2 búsquedas web) volcada a docs/02_MARKET_RESEARCH.md, docs/03_COMPETITORS.md, docs/SOURCES.md (20 fuentes).
+- **Pruebas y resultado:** git/node/go/rustc presentes y versionados; Engram MCP list_tools falla (2 intentos) → fallback Markdown.
+- **Decisiones/permiso:** usuario decidió NO tocar el repo previo y construir proyecto nuevo aquí; equipo 2-3; sin cuenta Colosseum todavía; ninguna instalación autorizada.
+- **Bloqueos:** Colosseum Copilot requiere cuenta (acción del usuario); Engram MCP caído.
+- **Siguiente acción:** usuario crea cuenta Colosseum → instalar Copilot con permiso → completar campo 4 del Research Gate → discutir modelo económico (token vs SAS+x402) con equipo → validación con devs → decisión de gate.
+- **Engram topic_key:** no aplicable (MCP no operativo).
+- **Post-cierre (misma sesión):** el usuario pidió copiar `This-is-my-harness` a este proyecto para usarlo de base sin tocar el original. Ejecutado: `robocopy /E` a `platform/` (270 archivos, 3.6MB; excluidos node_modules/target/.next/dist). Historial git completo (main, ahead 3) y cambios sin commitear preservados. Original intacto.
+- **Colosseum Copilot:** instalado global (~/.config/devin/skills/colosseum-copilot v2.0.1) + login aprobado por usuario (evidence:read). Consultas: precedentes de marketplace de skills (6 intentos Frontier, 0 premios → pivote idea original), QR/crypto payments (12+ intentos), reputación informal (~12 intentos, 0 premios).
+- **Pivote documentado:** opción A descartada (mercado ya resuelto: MP↔Upay QR bridge + SML + Lemon/Belo + 12 clones Colosseum). Candidato C guardado con reformulación (proof-of-income por cobros USDC, anti-sybil = pagos de terceros reales): docs/CANDIDATE_C_proof-of-income.md. El usuario detectó por sí mismo el ataque de self-swap → diseño ajustado.
+- **Siguiente acción real:** usuario decide si avanza con Candidato C → entrevistas de validación con informales → Research Gate.
+
+## Sesión 2 — 01/10/2026 (continuación)
+
+- **Meta:** explorar ideas alternativas globales + profundizar diseño del Candidato C.
+- **Barrido Copilot (5 espacios, ~60 proyectos, 0 premios):** guardrails/disputas agentes x402 (~20), payroll privado (~12), escrow buyer-protection (~11), marketplaces agente↔humano (~11), pay-per-crawl (~9). Idea "datos clínicos onchain" (dentalogic) DESCARTADA — datos onchain ≠ seguros (público+GDPR) y variantes correctas ya intentadas ~18 veces sin premio. Lección meta registrada en docs/03: el jurado premia corredor concreto + usuarios reales + plata moviéndose, no espacio vacío.
+- **2da pasada Candidato C:** MAINDOCS 🏆 (winner Renaissance) valida el mecanismo wallet→documento verificable; Destácame (7M users, 40 bancos) valida el mercado; zkTLS/Reclaim abre historia retroactiva (Binance/MP).
+- **Validación E-001:** el fundador ES el ICP (freelance, 10 años en negro, sin historial crediticio). Dolor confirmado n=1.
+- **Diseño profundizado en dossier:** modelo 3 tiers de evidencia (T1 pago USDC directo / T2 attestation+depósito / T3 solo ahorro), clasificación anti-auto-fondeo, calidad de pagador, modelo consent-gated (links pull + solicitudes push, nada público por defecto), wallet embebida no-custodial, flujo pagador fiat→USDC vía ramp licenciado con referencia Solana Pay, alcance global, catálogo completo de grises/fugas.
+- **Próxima acción:** entrevista con evaluador (inmobiliaria/financiera) — compromiso usuario para mañana → completar Research Gate → decisión CONSTRUIR/PIVOTEAR/DESCARTAR.
+
+## Sesión 3 — 01/10/2026 (continuación)
+
+- **Meta:** analizar idea nueva del usuario — votación electoral ciudadana onchain desde el celular — con el mismo procedimiento del Candidato C (Copilot + web research + prueba de extracción + dossier).
+- **Copilot (autenticado, v2, 6 consultas):** winners-only pass (top-25: solo Quadratus/LivingIP/Blonk son voting real, todos DAO-flavored); 2 búsquedas amplias (top-25 sin premio); conteo categoría governance: **357 proyectos, 6 winners, 0 civic-elections**; cluster "Solana-based Decentralized Voting Systems" **n=130**.
+- **Web research:** Voatz (USENIX Sec 2020: alterar/exponer voto; WV abandonó); Park-Specter-Narula-Rivest "Going from Bad to Worse" (2021): blockchain empeora el problema — recibos vendibles→compra de voto, sin efecto en turnout; Estonia i-voting funciona SIN chain (e-ID nacional es el pilar); Ley 27.781 AR = papel obligatorio, art.33 excluye emisión electrónica.
+- **Resultado:** Candidato D DESCARTADO con dossier `docs/CANDIDATE_D_voting.md`. Registrado en docs/01_IDEATION.md, docs/03_COMPETITORS.md, docs/SOURCES.md ([C23]-[C31], [S33]-[S37]).
+- **Bloqueos:** ninguno nuevo. Engram sigue caído (fallback Markdown).
+- **Siguiente acción:** usuario decide entre Candidato C (validación pendiente: entrevista evaluador) u otra idea nueva.
+
+## Sesión 4 — 01/10/2026 (continuación)
+
+- **Meta:** generar 5 candidatos nuevos con el estándar del Candidato C (usuario accesible + extracción Solana + plata/verificabilidad + espacio no saturado).
+- **Copilot (autenticado v2, 9 barridos + 4 detalles de proyecto):** espacios verificados saturados con 0 premios — reviews verificadas (~11), reputación gig portable (~11), herencia crypto (~11), pagos freelancer cross-border (~11), receipts/provenance de agentes (~11), funding OSS/donaciones (~11), ROSCA (~10), agente↔humano (~11), proof-of-delivery (~11), compra colectiva (~4-6, el más fino).
+- **Detalles clave:** Susu Protocol (Frontier) = ROSCA serio con curva de colateral, sin premio, apuntó a pools de desconocidos; HumanLayer (Frontier) = data-labeling digital para AI labs, no tareas físicas; Proof of Human = sybil-detection; Vaquita Protocol (Radar) = evidencia fina.
+- **Resultado:** pool de 5 candidatos en `docs/CANDIDATES_2nda_ronda.md`: E Vaquita cross-border, F agente-paga-humano físico, G fianza verificable, H pasaporte zkTLS gig, I compra colectiva fronteriza. Ninguno iguala el paquete completo de C — riesgos documentados por candidato.
+- **Siguiente acción:** usuario elige candidato → validación con usuarios reales → Research Gate (decisión humana).
+
+## Sesión 5 — 01/10/2026 (continuación)
+
+- **Meta:** usuario rechazó los 5 de la 2da ronda ("no me gusta ninguna, esforzate") → 3ra ronda con eje distinto: primitivas diferentes en vez de más attestation/escrow.
+- **Copilot (12 barridos + 3 detalles):** betting social (Pregame 🏆1ro-Consumer Blinks P2P; WeLikeSports 🏆Frontier pools parimutuel — coronó el corredor "prode"; Poll HM iMessage con tracción real) → dirección descartada (validada pero premiada ya). Paramétricos ~11/0, remesas-con-propósito ~11/0, tesorerías cerradas ~11/0, no-show stakes ~11/0, royalties ~11/0, oráculos ~11/0, savings-goals ~11/0 (nadie hizo custody-out-of-agency), rifa-VRF ~11/0, child-support = corredor vacío (ruido semántico), vouchers-restringidos ~11/0 (nadie hizo aid+whitelist), agro ~11/0 (todos tokenizaban tierra, nadie hizo preventa simple).
+- **Meta-lección confirmada:** TODO espacio protocolo-genérico tiene ~10+ intentos y ~0 premios — la diferenciación está en el corredor concreto + momento, no en el mecanismo.
+- **Resultado:** pool 3ra ronda en `docs/CANDIDATES_3ra_ronda.md`: J fondo-de-objetivo custody-out (corredor: quiebras de agencias de egresados), K obligaciones familiares verificables (cuota alimentaria/sponsorship — corredor vacío), L voucher uso-restringido (ayuda con whitelist merchants), M preventa de cosecha (compra adelantada ≠ crédito — Formosa real), N seña de turno (contexto dentalogic del equipo). Fuentes [C46]-[C60].
+- **Siguiente acción:** usuario evalúa el pool → propuesto "corredor test": 1 conversación por candidato top (agencia viajes / pagador-receptor cuota / comedor-ONG) antes de cualquier elección.
+
+## Sesión 6 — 01/10/2026 (continuación)
+
+- **Meta:** usuario trajo idea propia — "DNI agéntico" obligatorio para todos los agentes IA, regulación incluida, identidad en Solana.
+- **Evaluación M (preventa cosecha):** explicada en detalle a pedido del usuario (ciclo de escrow por hitos, compra-adelantada ≠ crédito, beneficios a ambas partes y al ecosistema local). Usuario la **descartó** ("no me gusta para nada") → no quedó registrada como candidato activo, solo permanece en el pool 3ra ronda.
+- **Copilot (2 barridos + 4 detalles):** agent-identity/KYA ~13 intentos 0 winners (Parakletos = tesis literal sin premio; Regent = KYC→agente gestión-propia demo ERC; AgentGate = gate de pagos pero identidad del dueño; Agent-Cred = custodia wallet). Segundo barrido "verified-human-gate": ~13 más, todos governance del dueño — **vacío confirmado: credencial de humano-verificado exigible por terceros no existe en Colosseum**.
+- **Web research:** ERC-8004 deployó mainnet 29/01/2026 (identidad agente seudónima, SIN human-binding — ventana abierta); Skyfire KYA/KYAPay productizó el binding pero cerrado/off-chain/JWT; agentid-kya-solana = esqueleto OSS sin verificación humana real; regulación en movimiento (Filipinas HB 11014 propone la credencial exacta; Brasil PL 974/2026; US AI AGENT Act draft; IETF AIP/AIRS en draft).
+- **Reformulación clave:** de "registro universal obligatorio por ley" a **capa de credencial de humano-verificado que los rails económicos exigen hoy** (enforcement económico antes que legal). Extracción: pasa SOLO como compuerta onchain — JWT de Skyfire no es verificable dentro de programas Solana. Rails destino: MCPay/Latinum/facilitators como clientes naturales.
+- **Resultado:** dossier completo en `docs/CANDIDATE_O_agentic-dni.md` (cliente, problema, mapa de lo existente, diferenciación, integración con rails, riesgos honestos, requisitos de Research Gate). Sección en `03_COMPETITORS.md`; fuentes [C61]-[C66] y [S38]-[S46].
+- **Riesgo central documentado:** cold-start (necesita ≥1 facilitator real gateando) + dependencia de KYC externo + destino probable = absorbido/estandarizado, no IPO.
+- **Siguiente acción:** usuario decide si O pasa a Research Gate → validación con un facilitator x402 (PayAI/MCPay/Corbits) como condición explícita.
+
+## Sesión 7 — 01/10/2026 (continuación)
+
+- **Meta:** Research Gate para Candidato O completado y decisión humana emitida.
+- **Resultado:** `docs/04_RESEARCH_GATE.md` lleno con los 11 campos → **DECISIÓN: CONSTRUIR** (aprobado por usuario, alias pendiente de registrar). Alcance aprobado: core MVP = SAS attestation "human-verified agent" + x402 gate + demo dos agentes + dashboard audit; **mock issuer** para demo (KYC real post-hackathon); **puente 8004 fuera del MVP** (solo narrativa pitch, visión cross-chain de producción). Condición registrada: contacto con ≥1 facilitator x402 post-demo para validar pull.
+- **Archivos actualizados:** 04_RESEARCH_GATE (aprobado), CANDIDATE_O (estado + scope), DECISIONS.md (registro append-only), PROJECT_STATE (fase → crear sdd/changes/agentic-dni).
+- **Siguiente acción:** crear `sdd/changes/agentic-dni/` y arrancar fase SDD: propuesta → spec → diseño → tasks → implementación.
+
+## Sesión 8 — 01/10/2026 (continuación)
+
+- **Meta:** usuario pausó el build de O ("no aun no quiero construir") → verificar documentación completa y seguir explorando ideas por eje "superficies recién creadas".
+- **Cierre documental O:** `01_IDEATION.md` actualizado (O como elegido + reserva de C + pools), PROJECT_STATE coherente (gate aprobado, build pausado, listo para retomar). Todo quedó reproducible.
+- **Copilot 4ta ronda (7 barridos + 1 detalle):** tickets-NFT ~10/0 (todos pre-transfer-hook), Seeker attestation ~11/0 (soltag OSS existe como referencia), agent receipts ~11/0 con Mercantill ganando el vecino enterprise-controls, M2M ~11/0 (demo-hostile), AI provenance ~11/0 (cementerio notarización), agent bonds ~11/0 (AgentBond literal existe), stocks tokenizados ~11/0 (+xStocks incumbent), pay-to-message ~11/0, sensores ~11 con Kiko 5to-DePIN.
+- **Web:** capacidades Seeker verificadas (SGT soulbound 1/dispositivo + Seed Vault Secure Element) — la primitiva de Q es real.
+- **Resultado:** pool 4ta ronda en `docs/CANDIDATES_4ta_ronda.md`: P entradas anti-reventa (transfer hooks), Q claims hardware-bound (Seeker), R factura del agente (x402 receipts), S mandato verificable, T suscripción-que-muere-sola. Observación estratégica: O+R+S podrían ser UN producto (accountability completa de pagos de agentes).
+- **Siguiente acción:** usuario decide: arrancar SDD de O, o evaluar P/Q como alternativas, o la opción O+R+S como suite.
+
+## Sesión 9 — 01/10/2026 (continuación)
+
+- **Decisión del equipo:** expandir O a **suite O+R+S** — "capa de accountability de la economía de agentes" (identidad quién-está-atrás + mandato qué-autorizó + recibo qué-pasó, como efecto atómico del pago gateado).
+- **Verificaciones técnicas:** SAS confirmado live (credential→schema→attestation PDAs, expiry, revocable, legible por programas vía CPI — `sas-lib` TS) [S50]. AP2 de Google define el modelo exacto (mandates VDC open/closed + receipts) — nuestra suite = ese modelo onchain-exigible; vocabulario compatible gratis [S51].
+- **Diseño unificado documentado** en dossier O §10: programa de pago gateado (check attestation + check mandato PDA + transfer USDC + emitir recibo en UNA tx), honestidad estructural (gate vive lado vendedor — el agente puede pagar fuera; el servicio es quien cierra la puerta), demo de 6 beats, riesgo scope-creep mitigado (único programa custom = el gate).
+- **Pendiente para spec/diseño SDD:** toolchain del programa (Anchor vs nativo — Solana CLI/Anchor ausentes, instalación con permiso); decisión gate-in-program vs gate-en-facilitator.
+
+## Sesión 10 — 02/10/2026
+
+- **Meta:** usuario reanudó el build ("build pausado" de sesión 9 levantado) → ejecutar fase **PROPOSE** del change `agentic-dni` según `harness/SDD_PLAYBOOK.md` + skill local `formosa-sdd-propose`.
+- **Máquina y acceso real:** LOCAL_USER, Windows 10 + Git Bash; lectura/escritura verificadas. No se ejecutó código ni build (fase documental — la fase no escribe código por contrato).
+- **Archivos revisados:** `.agents/skills/formosa-sdd-propose/SKILL.md`, `harness/SDD_PLAYBOOK.md`, `PROJECT_STATE.md`, `docs/CANDIDATE_O_agentic-dni.md` (dossier completo, fuente principal §10), `docs/04_RESEARCH_GATE.md`, `docs/DECISIONS.md`, `docs/05_PRODUCT_SPEC.md`, `docs/ENVIRONMENT.md`, `sdd/changes/agentic-dni/proposal.md` + `STATUS.md` (plantillas).
+- **Tareas ejecutadas:** (1) `sdd/changes/agentic-dni/proposal.md` completado — objetivo, usuario/pagador, alcance IN + OUT explícito, MVP = demo 6 beats, riesgos, citando dossier/gate/DECISIONS; (2) `docs/05_PRODUCT_SPEC.md` — baseline inicial de producto consolidado; (3) `PROJECT_STATE.md` — fase propose done, change activo, nota "build pausado" limpiada (retomado por el usuario), próxima acción = spec; (4) `sdd/changes/agentic-dni/STATUS.md` actualizado.
+- **Pruebas y resultado:** ninguna prueba técnica — fase documental. Artefacto ≠ evidencia: la propuesta quedó escrita pero **pendiente de aprobación humana** (gate de la fase: aceptar propuesta).
+- **Decisiones/permiso:** ninguna decisión nueva del humano en esta sesión; el alcance se copió sin rediseñar desde el gate aprobado (suite O+R+S, mock issuer, 8004 fuera, devnet, recibo event-log probable).
+- **Bloqueos:** Engram MCP sigue caído → `mem_save` omitido, fallback Markdown activo (registrado acá como manda el protocolo).
+- **Siguiente acción:** usuario revisa/aprueba `proposal.md` → fase `spec` (`sdd/changes/agentic-dni/spec.md`: requisitos observables, flujo central, criterios de aceptación, fuera de scope).
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 11 — 02/10/2026
+
+- **Meta:** ejecutar fase **SPEC** del change `agentic-dni` según `harness/SDD_PLAYBOOK.md` + skill local `formosa-sdd-spec` (fase despachada tras aprobación humana de la propuesta).
+- **Máquina y acceso real:** LOCAL_USER, Windows 10 + Git Bash; lectura/escritura verificadas en la carpeta del proyecto. No se ejecutó código ni build (fase documental — la fase no escribe código por contrato).
+- **Archivos revisados:** `.agents/skills/formosa-sdd-spec/SKILL.md`, `harness/SDD_PLAYBOOK.md`, `AGENTS.md`, `CLAUDE.md` (adaptador), `sdd/changes/agentic-dni/proposal.md` + `STATUS.md`, `sdd/templates/spec.md` + `STATUS.md` + `test-plan.md`, `docs/CANDIDATE_O_agentic-dni.md` (§10 diseño de suite + demo 6 beats + honestidad estructural), `docs/04_RESEARCH_GATE.md` (alcance cerrado), `docs/05_PRODUCT_SPEC.md`, `docs/DECISIONS.md`, `docs/ENVIRONMENT.md`, `PROJECT_STATE.md`.
+- **Tareas ejecutadas:** (1) `sdd/changes/agentic-dni/spec.md` completado — framing usuario/problema/outcome, 10 requisitos MUST observables (R-01..R-10), criterios de aceptación CA-1..CA-6 mapeados 1:1 a los 6 beats con condiciones PASS/FAIL explícitas + edge cases CA-7..CA-12, invariantes INV-1..INV-5, errores/seguridad/accesibilidad, OUT explícito; (2) `STATUS.md` → spec escrita, próxima fase design; (3) `PROJECT_STATE.md` → fase, change activo, próxima acción, sesión.
+- **Pruebas y resultado:** ninguna prueba técnica — fase documental. Artefacto ≠ evidencia: la spec quedó escrita pero **pendiente de revisión humana** (gate de la fase); no se afirmó aprobación.
+- **Decisiones/permiso:** ninguna decisión de diseño tomada — las 7 forks quedaron marcadas OPEN para `design` (Anchor vs nativo, recibo event-log vs cuenta-PDA, modo integración x402, SAS real vs schema propio, SPL vs Token-2022, ventana de cap_diario, respuesta del servicio en beat 3). Invariante de privacidad fijado a nivel spec: onchain solo nivel/issuer/timestamp/revocación — nunca PII.
+- **Bloqueos:** Engram MCP sigue caído → `mem_save` omitido, fallback Markdown (registrado según protocolo).
+- **Siguiente acción:** usuario revisa/aprueba `spec.md` → fase `design` resuelve las 7 decisiones OPEN (`docs/06_SOLANA_DECISION.md`, `docs/07_ARCHITECTURE.md`, `sdd/changes/agentic-dni/design.md`).
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 12 — 02/10/2026
+
+- **Meta:** ejecutar fase **DESIGN** del change `agentic-dni` según `harness/SDD_PLAYBOOK.md` + skill local `formosa-sdd-design` (fase despachada por el orquestador SDD tras aprobación humana de la spec).
+- **Máquina y acceso real:** LOCAL_USER, Windows 10 + Git Bash; lectura/escritura verificadas en la carpeta del proyecto. No se escribió código ni se ejecutó build (fase documental — la fase no escribe código por contrato).
+- **Archivos revisados:** `.agents/skills/formosa-sdd-design/SKILL.md`, `harness/SDD_PLAYBOOK.md`, `sdd/changes/agentic-dni/{proposal,spec,design,STATUS}.md`, `sdd/templates/design.md`, `docs/CANDIDATE_O_agentic-dni.md` (§10 suite aprobada + 6 beats + honestidad estructural), `docs/{04_RESEARCH_GATE,05_PRODUCT_SPEC,DECISIONS,ENVIRONMENT,SESSION_LOG,SOURCES}.md`, `docs/ENVIRONMENT.md` (toolchain WSL real), `.agents/skills/{solana-dev,solana-hackathon}/SKILL.md`, `AGENTS.md`, `PROJECT_STATE.md`.
+- **Verificación externa (web, fuentes primarias):** `sas-lib@1.0.10` en npm (Solana Foundation, sobre `@solana/kit`); SAS program `22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG` live en devnet; layout `Attestation{nonce,credential,schema,data,signer,expiry,token_account}` y seeds `["attestation",credential,schema,nonce]` verificados en `program/src` + `clients/typescript/src/pdas.ts` del repo oficial; **revocación SAS = `CloseAttestation` borra la cuenta** (no hay flag revoked); `expiry==0` = sin expiración.
+- **Tareas ejecutadas:** (1) `docs/06_SOLANA_DECISION.md` — registro de las 7 decisiones con opciones/tradeoffs/invalidadores: D1 Anchor 1.2.0, D2 recibo `emit!` event-log, D3 servicio propio x402-shaped, D4 SAS real devnet con check por lectura de cuenta (sin CPI), D5 SPL Token, D6 cap_diario = día calendario UTC, D7 servicio verifica tx on-chain + recurso JSON; (2) `docs/07_ARCHITECTURE.md` — diagrama de componentes + trust boundaries, layouts `GateConfig`/`Mandate`/Attestation SAS, flujo `pay` exacto con orden de checks y errores distinguibles, componentes off-chain (issuer/service-x/agent CLI/dashboard/scripts), repo layout `demo/`, estrategia build/test/deploy en WSL; (3) `sdd/changes/agentic-dni/design.md` — artefacto SDD consolidado mapeado a spec; (4) `STATUS.md` + `PROJECT_STATE.md` actualizados.
+- **Pruebas y resultado:** ninguna prueba técnica — fase documental. Verificación de fuentes primarias sí ejecutada (ver arriba). Artefacto ≠ evidencia: el diseño quedó escrito pero **pendiente de revisión humana** (gate de la fase).
+- **Decisiones/permiso:** las 7 forks OPEN de spec resueltas con elección técnicamente dominante cada una (sin fork genuino que requiera al humano); hallazgo SAS (revocación = cuenta cerrada) incorporado al check on-chain; `update_mandate` diferido a LATER (ningún beat/CA lo exige).
+- **Bloqueos:** Engram MCP sigue caído → `mem_save` omitido, fallback Markdown (registrado según protocolo).
+- **Siguiente acción:** usuario revisa/aprueba diseño (`design.md` + `docs/06` + `docs/07`) → fase `tasks` (`sdd/changes/agentic-dni/tasks.md` + `test-plan.md` — slices verticales y pruebas ejecutables).
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 13 — 02/10/2026
+
+- **Meta:** ejecutar fase **TASKS** del change `agentic-dni` según `harness/SDD_PLAYBOOK.md` + skill local `formosa-sdd-tasks` (fase despachada por el orquestador SDD tras aprobación humana del diseño).
+- **Máquina y acceso real:** LOCAL_USER, Windows 10 + Git Bash; lectura/escritura verificadas en la carpeta del proyecto. No se escribió código ni se ejecutó build (fase documental — la fase no escribe código por contrato).
+- **Archivos revisados:** `.agents/skills/formosa-sdd-tasks/SKILL.md`, `harness/SDD_PLAYBOOK.md`, `sdd/changes/agentic-dni/{proposal,spec,design,STATUS}.md`, `sdd/templates/{tasks,test-plan,STATUS}.md`, `docs/{06_SOLANA_DECISION,07_ARCHITECTURE,ENVIRONMENT,DECISIONS}.md`, `AGENTS.md`, `PROJECT_STATE.md`, `demo/` (solo README — carpeta vacía de código).
+- **Tareas ejecutadas:** (1) `sdd/changes/agentic-dni/tasks.md` — 8 slices verticales ordenados por dependencia, cada uno con archivos bajo `demo/`, aceptación chequeable y cobertura R/CA/beat: **S1** scaffold `demo/`+pipeline WSL+GateConfig (PRIMER SLICE recomendado) · **S2** SAS dumpeado en test-validator (`scripts/dump_sas.sh` idempotente + `[[test.genesis]]` + helpers sas-lib/token) · **S3** `init_mandate`+`pay` completo (CA-2/3/4) · **S4** `revoke_mandate`/`close_mandate`+matriz de reverts CA-5..CA-12 · **S5** deploy devnet+setup actores · **S6** issuer+agente CLI+servicio x402 · **S7** dashboard read-only · **S8** demo 6 beats+docs; (2) `sdd/changes/agentic-dni/test-plan.md` — mapa 1:1 CA-1..CA-12 a casos `anchor test` + nivel 2 integración devnet + nivel 3 smoke beats; estrategia tiempo-dependiente CA-8/CA-9 = expiry corto (~10s) + retry de `pay` (fallback `warp_slot` en run dedicado); asserts de atomicidad INV-2 en todo revert; (3) `STATUS.md` + `PROJECT_STATE.md` actualizados.
+- **Pruebas y resultado:** ninguna prueba técnica — fase documental. Artefacto ≠ evidencia: las tasks quedan escritas pero **pendiente aprobación humana del primer slice** (gate de la fase `tasks`: "aprobar primer slice"); no habilita código aún.
+- **Decisiones/permiso:** ninguna decisión de implementación tomada; decisiones menores diferidas a `apply` documentadas en test-plan (p.ej. `pay` con `amount=0` → default recomendado `InvalidAmount`, spec no lo fija). Forecast de review incluido en `tasks.md`: ~1.700–2.300 líneas, 8 slices — informativo (repo local sin flujo PR).
+- **Bloqueos:** Engram MCP sigue caído → `mem_save` omitido, fallback Markdown (registrado según protocolo).
+- **Siguiente acción:** usuario revisa `tasks.md` + `test-plan.md` y aprueba el primer slice **S1** → fase `apply` (TDD, slice-by-slice, commits convencionales en español).
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).

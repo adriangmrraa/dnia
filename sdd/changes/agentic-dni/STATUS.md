@@ -1,0 +1,16 @@
+# Change agentic-dni — tracking
+
+Estado: **TASKS ESCRITAS — pendiente aprobación humana del primer slice** (gate de la fase `tasks` según `harness/SDD_PLAYBOOK.md`). Próxima fase: `apply`, habilitada al aprobar el slice S1.
+
+- Fecha: 02/10/2026 (última actualización)
+- Owner alias: pendiente de registrar (equipo 2-3, sin PII)
+- Link Research Gate: `docs/04_RESEARCH_GATE.md` — CERRADO: CONSTRUIR 01/10/2026 (suite O+R+S)
+- Propuesta: `sdd/changes/agentic-dni/proposal.md` — completada 02/10/2026; aprobación humana comunicada al despachar la fase spec (sesión 11)
+- Spec: `sdd/changes/agentic-dni/spec.md` — completada 02/10/2026: 10 requisitos MUST observables, CA-1..CA-6 mapeados 1:1 a los 6 beats + edge cases CA-7..CA-12, invariantes INV-1..INV-5 (privacidad = solo nivel/issuer/timestamp/revocación onchain), OUT explícito — aprobación comunicada al despachar design (sesión 12)
+- Diseño: `sdd/changes/agentic-dni/design.md` + `docs/06_SOLANA_DECISION.md` + `docs/07_ARCHITECTURE.md` — completados 02/10/2026 (sesión 12): **las 7 decisiones OPEN resueltas** — D1 Anchor 1.2.0, D2 recibo event-log `emit!`, D3 servicio propio x402-shaped, D4 SAS real devnet vía `sas-lib` con check por lectura de cuenta (sin CPI; revocación = `CloseAttestation` borra la cuenta), D5 SPL Token, D6 cap_diario = día calendario UTC (`day_index`), D7 servicio verifica tx on-chain + recurso JSON — aprobación comunicada al despachar tasks (sesión 13)
+- Tasks: `sdd/changes/agentic-dni/tasks.md` — completadas 02/10/2026 (sesión 13): **8 slices verticales S1→S8** con aceptación chequeable y cobertura R/CA/beat por slice. S1=scaffold `demo/`+pipeline WSL+GateConfig · S2=SAS dumpeado en test-validator+helpers (idempotente, fixture `tests/fixtures/sas.so` + `[[test.genesis]]`) · S3=`init_mandate`+`pay` completo (CA-2/3/4) · S4=revocación+matriz de reverts CA-5..CA-12 · S5=deploy devnet+setup actores · S6=issuer+agente CLI+servicio x402 · S7=dashboard read-only · S8=demo 6 beats+docs. Forecast ~1.700–2.300 líneas (alto volumen, sin flujo PR — informativo).
+- Test plan: `sdd/changes/agentic-dni/test-plan.md` — completado 02/10/2026: mapa 1:1 CA-1..CA-12 → casos `anchor test` en validator con SAS dumpeado + nivel 2 integración devnet (issuer/x402/agente) + nivel 3 smoke beats; estrategia tiempo-dependiente CA-8/CA-9 = expiry corto + retry (fallback `warp_slot` en run dedicado); asserts de atomicidad (INV-2) en todo revert.
+- Próximo slice: **S1** (scaffold `demo/` + pipeline WSL + GateConfig) — pendiente OK humano para `apply`.
+- Bloqueos: ninguno técnico; Engram MCP caído → fallback Markdown (sin Engram keys)
+- Engram keys: no aplicable (MCP no operativo)
+- Alcance congelado por gate: programa de pago gateado (`pay` atómico) + mandato PDA + mock issuer SAS + recibo event-log + demo 6 beats + dashboard. OUT: KYC real, puente 8004, mainnet, trazabilidad pública, agregación multi-mandato. Todo el código irá en `demo/`.
