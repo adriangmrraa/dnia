@@ -59,9 +59,10 @@ El corazón del gate: los 14 pasos del diseño en una ix atómica.
 
 ## S4 — Revocación + matriz de reverts (CA-5..CA-12)
 
-- [ ] `lib.rs`: `revoke_mandate` (solo owner) + `close_mandate` (devuelve rent, permite re-init).
-- [ ] Tests: CA-5a `OverPerTxLimit` ($10>$5), CA-5b `PayeeNotWhitelisted` ($0.50 a Y), CA-6-onchain (`revoke_mandate` → siguiente `pay` revierte `MandateRevoked`), CA-7 (issuer cierra attestation → `AttestationMissing`), CA-8 (attestation expiry≈now+10s → `AttestationExpired`), CA-9 (mandato expiry corto → `MandateExpired`), CA-10 (cap 0.75: 2do pago de 0.50 → `OverDailyCap`), CA-11 (agente C firmando con Mandate PDA de A → revert seeds/`MandateBoundToOtherAgent`), CA-12 (attestation de otro credential/schema → `IssuerNotRecognized`). En cada revert: assert sin transfer ni evento.
+- [x] `lib.rs`: `revoke_mandate` (solo owner) + `close_mandate` (devuelve rent, permite re-init).
+- [x] Tests: CA-5a `OverPerTxLimit` ($10>$5), CA-5b `PayeeNotWhitelisted` ($0.50 a Y), CA-6-onchain (`revoke_mandate` → siguiente `pay` revierte `MandateRevoked`), CA-7 (issuer cierra attestation → `AttestationMissing`), CA-8 (attestation expiry≈now+10s → `AttestationExpired`), CA-9 (mandato expiry corto → `MandateExpired`), CA-10 (cap 0.75: 2do pago de 0.50 → `OverDailyCap`), CA-11 (agente C firmando con Mandate PDA de A → `MandateBoundToOtherAgent`), CA-12 (attestation de otro credential/schema → `IssuerNotRecognized`). En cada revert: assert sin transfer ni evento.
 - **Aceptación:** `anchor test` cubre CA-1..CA-12 (CA-1 lo satisface el bootstrap de S2). Estrategia tiempo-dependiente en `test-plan.md`.
+- **Evidencia (02/10/2026, WSL):** `npx ts-mocha` → **20/20 passing** (S1×3 + S2×4 + S3×3 + S4×10). CA-8/CA-9 usan `surfnet.timeTravelToTimestamp` (determinista — mejor que esperar expiries reales): attestation expirada → `AttestationExpired`, mandato expirado → `MandateExpired`. CA-12 crea issuer foráneo real (`bootstrapIssuer` parametrizado) → `IssuerNotRecognized` por mismatch de PDA. `close_mandate` devuelve rent al owner y permite re-init. Todos los reverts assertan balance inmutable + error distinguible.
 - **Cubre:** R-02/R-03 completo, R-06, beats 5–6 (parte on-chain), seguridad "solo owner muta mandato".
 
 ## S5 — Deploy devnet + setup de actores reales

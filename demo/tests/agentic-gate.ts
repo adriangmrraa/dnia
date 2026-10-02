@@ -11,6 +11,7 @@ import { bootGate, fundSol, stopGate, GateHarness } from "./helpers/surfnet";
 import {
   attest,
   attestationPda,
+  bootstrapIssuer,
   bootstrapSas,
   fetchAttestationData,
   revokeAttestation,
@@ -429,5 +430,325 @@ describe("agentic-gate — S3: init_mandate + pay (CA-2/3/4)", () => {
     assert.equal(await tokenBalance(h, ataX), xBefore);
     const m = await h.program.account.mandate.fetch(mandateB);
     assert.ok(m.spentToday.isZero());
+  });
+});
+
+// ── S4 — Revocación + matriz de reverts CA-5..CA-12 ───────────────────────
+
+interface AgentFixture {
+  kp: Keypair;
+  ata: PublicKey;
+  mandate: PublicKey;
+  attestation: PublicKey; // PDA esperada (puede no existir)
+}
+
+describe("agentic-gate — S4: matriz de reverts CA-5..CA-12", () => {
+  let h: GateHarness;
+  let sas: SasContext;
+  let configPda: PublicKey;
+  let mint: PublicKey;
+  let serviceX: Keypair;
+  let serviceY: Keypair;
+  let ataX: PublicKey;
+  let ataY: PublicKey;
+
+  /** now() del ledger — el surfnet corre con clock real. */
+  const now = async () => {
+    const slot = await h.connection.getSlot();
+    const t = await h.connection.getBlockTime(slot);
+    return t ?? Math.floor(Date.now() / 1000);
+  };
+
+  const mandatePda = (agent: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("mandate"),
+        h.payer.publicKey.toBuffer(),
+        agent.toBuffer(),
+      ],
+      h.program.programId
+    )[0];
+
+  const payAccountsFor = (
+    fx: AgentFixture,
+    service: PublicKey,
+    serviceAta: PublicKey,
+    mandateOverride?: PublicKey,
+    attestationOverride?: PublicKey
+  ) => ({
+    agent: fx.kp.publicKey,
+    config: configPda,
+    attestation: attestationOverride ?? fx.attestation,
+    mandate: mandateOverride ?? fx.mandate,
+    service,
+    agentAta: fx.ata,
+    serviceAta,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  });
+
+  const tryPay = async (
+    fx: AgentFixture,
+    amount: BN,
+    service: PublicKey,
+    serviceAta: PublicKey,
+    opts?: { mandate?: PublicKey; attestation?: PublicKey; ref?: string }
+  ): Promise<{ sig?: string; err?: any }> => {
+    try {
+      const sig = await h.program.methods
+        .pay(amount, REF(opts?.ref ?? "INV"))
+        .accountsPartial(
+          payAccountsFor(
+            fx,
+            service,
+            serviceAta,
+            opts?.mandate,
+            opts?.attestation
+          )
+        )
+        .signers([fx.kp])
+        .rpc();
+      return { sig };
+    } catch (e) {
+      return { err: e };
+    }
+  };
+
+  /**
+   * Crea agente con ATA fondeada + mandato; `attestLevel=null` saltea la
+   * attestation (agente huérfano). `sasCtx` permite emitir bajo issuer foráneo.
+   */
+  const setupAgent = async (
+    attestLevel: number | null,
+    attestationExpiry: number,
+    opts: {
+      maxPerTx: number;
+      dailyCap: number;
+      payees: PublicKey[];
+      mandateExpiry: number;
+      sasCtx?: SasContext;
+    }
+  ): Promise<AgentFixture> => {
+    const kp = fundedKeypair(h);
+    const ataAddr = await ata(h, mint, kp.publicKey);
+    await mintUsdc(h, mint, ataAddr, 20_000_000n);
+    const mandate = mandatePda(kp.publicKey);
+    const ctx = opts.sasCtx ?? sas;
+    const attestation = await attestationPda(ctx, kp.publicKey);
+    if (attestLevel !== null) {
+      await attest(h, ctx, kp.publicKey, attestLevel, attestationExpiry);
+    }
+    await h.program.methods
+      .initMandate(
+        kp.publicKey,
+        USDC(opts.maxPerTx),
+        USDC(opts.dailyCap),
+        opts.payees,
+        new BN(opts.mandateExpiry)
+      )
+      .accountsPartial({
+        mandate,
+        owner: h.payer.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    return { kp, ata: ataAddr, mandate, attestation };
+  };
+
+  // ── fixtures compartidos ──────────────────────────────────────────────
+  let A: AgentFixture; // policy demo {≤$5, cap $10, solo X}
+  let C: AgentFixture; // cap $0.75 — CA-10
+  let D: AgentFixture; // attestation expira en ~5s — CA-8
+  let E: AgentFixture; // mandato expira en ~5s — CA-9
+  let F: AgentFixture; // attestation de issuer foráneo — CA-12
+
+  before(async () => {
+    h = await bootGate();
+    sas = await bootstrapSas(h);
+    [configPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      h.program.programId
+    );
+    await h.program.methods
+      .initializeConfig(h.payer.publicKey, sas.credential, sas.schema, 1)
+      .rpc();
+
+    serviceX = fundedKeypair(h);
+    serviceY = fundedKeypair(h);
+    mint = await createTestUsdc(h);
+    ataX = await ata(h, mint, serviceX.publicKey);
+    ataY = await ata(h, mint, serviceY.publicKey);
+
+    const t0 = await now();
+    A = await setupAgent(2, 0, {
+      maxPerTx: 5,
+      dailyCap: 10,
+      payees: [serviceX.publicKey],
+      mandateExpiry: 0,
+    });
+    C = await setupAgent(2, 0, {
+      maxPerTx: 5,
+      dailyCap: 0.75,
+      payees: [serviceX.publicKey],
+      mandateExpiry: 0,
+    });
+    D = await setupAgent(2, t0 + 5, {
+      maxPerTx: 5,
+      dailyCap: 10,
+      payees: [serviceX.publicKey],
+      mandateExpiry: 0,
+    });
+    E = await setupAgent(2, 0, {
+      maxPerTx: 5,
+      dailyCap: 10,
+      payees: [serviceX.publicKey],
+      mandateExpiry: t0 + 5,
+    });
+    // Issuer foráneo: mismo schema, credential distinto → PDA no coincide.
+    const foreign = await bootstrapIssuer(h, "FOREIGN-ISSUER");
+    F = await setupAgent(2, 0, {
+      maxPerTx: 5,
+      dailyCap: 10,
+      payees: [serviceX.publicKey],
+      mandateExpiry: 0,
+      sasCtx: foreign,
+    });
+  });
+
+  after(async () => {
+    await stopGate(h);
+  });
+
+  it("CA-5a: pay($10) > max_per_tx revierte OverPerTxLimit", async () => {
+    const xBefore = await tokenBalance(h, ataX);
+    const { err } = await tryPay(A, USDC(10), serviceX.publicKey, ataX);
+    expectGateErr(err, "OverPerTxLimit");
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+  });
+
+  it("CA-5b: pay($0.50, Y) con Y fuera de whitelist revierte PayeeNotWhitelisted", async () => {
+    const yBefore = await tokenBalance(h, ataY);
+    const { err } = await tryPay(A, USDC(0.5), serviceY.publicKey, ataY);
+    expectGateErr(err, "PayeeNotWhitelisted");
+    assert.equal(await tokenBalance(h, ataY), yBefore);
+  });
+
+  it("CA-11: agente C firmando con el mandato de A revierte MandateBoundToOtherAgent", async () => {
+    const xBefore = await tokenBalance(h, ataX);
+    const { err } = await tryPay(C, USDC(0.5), serviceX.publicKey, ataX, {
+      mandate: A.mandate,
+    });
+    expectGateErr(err, "MandateBoundToOtherAgent");
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+  });
+
+  it("CA-10: segundo pago supera el cap diario → OverDailyCap", async () => {
+    // cap de C = $0.75 → 1er pago $0.50 confirma, 2do $0.50 excede.
+    const r1 = await tryPay(C, USDC(0.5), serviceX.publicKey, ataX);
+    assert.isUndefined(r1.err, `1er pago debió confirmar: ${r1.err}`);
+    const xMid = await tokenBalance(h, ataX);
+
+    const { err } = await tryPay(C, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(err, "OverDailyCap");
+    assert.equal(await tokenBalance(h, ataX), xMid);
+    const m = await h.program.account.mandate.fetch(C.mandate);
+    assert.ok(m.spentToday.eq(USDC(0.5)));
+  });
+
+  it("CA-12: attestation de issuer foráneo revierte IssuerNotRecognized", async () => {
+    const xBefore = await tokenBalance(h, ataX);
+    // F pasa SU attestation (válida pero bajo otra credential) con su mandato.
+    const { err } = await tryPay(F, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(err, "IssuerNotRecognized");
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+  });
+
+  it("revoke_mandate por no-owner revierte Unauthorized", async () => {
+    const intruder = fundedKeypair(h);
+    let err: any = null;
+    try {
+      await h.program.methods
+        .revokeMandate()
+        .accountsPartial({ mandate: A.mandate, owner: intruder.publicKey })
+        .signers([intruder])
+        .rpc();
+    } catch (e) {
+      err = e;
+    }
+    expectGateErr(err, "Unauthorized");
+  });
+
+  it("CA-6: revoke_mandate del owner → siguiente pay revierte MandateRevoked", async () => {
+    await h.program.methods
+      .revokeMandate()
+      .accountsPartial({ mandate: A.mandate, owner: h.payer.publicKey })
+      .rpc();
+    const m = await h.program.account.mandate.fetch(A.mandate);
+    assert.isTrue(m.revoked);
+
+    const xBefore = await tokenBalance(h, ataX);
+    const { err } = await tryPay(A, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(err, "MandateRevoked");
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+  });
+
+  it("close_mandate devuelve rent y permite re-init del mismo par", async () => {
+    const lamBefore = await h.connection.getBalance(h.payer.publicKey);
+    await h.program.methods
+      .closeMandate()
+      .accountsPartial({ mandate: A.mandate, owner: h.payer.publicKey })
+      .rpc();
+
+    const closed = await h.connection.getAccountInfo(A.mandate);
+    assert.isNull(closed, "la cuenta mandate debió cerrarse");
+    const lamAfter = await h.connection.getBalance(h.payer.publicKey);
+    assert.isAbove(lamAfter, lamBefore, "el rent no volvió al owner");
+
+    // Re-init (reparación de demo) — el PDA queda libre.
+    await h.program.methods
+      .initMandate(
+        A.kp.publicKey,
+        USDC(5),
+        USDC(10),
+        [serviceX.publicKey],
+        new BN(0)
+      )
+      .accountsPartial({
+        mandate: A.mandate,
+        owner: h.payer.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    const m = await h.program.account.mandate.fetch(A.mandate);
+    assert.isFalse(m.revoked);
+    assert.ok(m.totalSpent.isZero());
+  });
+
+  it("CA-7: issuer cierra la attestation → pay revierte AttestationMissing", async () => {
+    await revokeAttestation(h, sas, C.kp.publicKey);
+    const gone = await fetchAttestationData(sas, C.attestation);
+    assert.isNull(gone, "la attestation debió desaparecer");
+
+    const xBefore = await tokenBalance(h, ataX);
+    const { err } = await tryPay(C, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(err, "AttestationMissing");
+    assert.equal(await tokenBalance(h, ataX), xBefore);
+  });
+
+  it("CA-8/CA-9: tras time-travel, attestation expirada → AttestationExpired y mandato expirado → MandateExpired", async () => {
+    // Viaje determinista del clock del surfnet (+2 min > expiry T0+5s).
+    const future = (await now()) + 120;
+    h.surfnet.timeTravelToTimestamp(future * 1000);
+
+    const xBefore = await tokenBalance(h, ataX);
+
+    // D: attestation expirada, mandato vigente → falla identidad.
+    const rD = await tryPay(D, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(rD.err, "AttestationExpired");
+
+    // E: attestation sin expiración, mandato expirado → falla autorización.
+    const rE = await tryPay(E, USDC(0.5), serviceX.publicKey, ataX);
+    expectGateErr(rE.err, "MandateExpired");
+
+    assert.equal(await tokenBalance(h, ataX), xBefore);
   });
 });

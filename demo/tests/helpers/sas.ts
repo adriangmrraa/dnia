@@ -102,10 +102,15 @@ export async function sendKitIxs(
 }
 
 /**
- * Bootstrap del issuer mock: credential + schema `agentic-dni-human-verified` v1
- * con un único campo `level: u8`. Retorna el contexto que consume `attest`.
+ * Bootstrap de un issuer: credential + schema v1 con fields [level,issued_at].
+ * Parametrizable por nombres para crear issuers "foráneos" (CA-12).
  */
-export async function bootstrapSas(h: GateHarness): Promise<SasContext> {
+export async function bootstrapIssuer(
+  h: GateHarness,
+  credentialName = CREDENTIAL_NAME,
+  schemaName = SCHEMA_NAME,
+  schemaVersion = SCHEMA_VERSION
+): Promise<SasContext> {
   const rpc = createSolanaRpc(h.surfnet.rpcUrl);
   const payerSigner = await createKeyPairSignerFromBytes(h.payer.secretKey);
 
@@ -115,12 +120,12 @@ export async function bootstrapSas(h: GateHarness): Promise<SasContext> {
 
   const [credentialAddr] = await deriveCredentialPda({
     authority: issuer.publicKey.toBase58() as Address,
-    name: CREDENTIAL_NAME,
+    name: credentialName,
   });
   const [schemaAddr] = await deriveSchemaPda({
     credential: credentialAddr,
-    name: SCHEMA_NAME,
-    version: SCHEMA_VERSION,
+    name: schemaName,
+    version: schemaVersion,
   });
 
   // Tx 1: credential (signers autorizados = [issuer]).
@@ -131,7 +136,7 @@ export async function bootstrapSas(h: GateHarness): Promise<SasContext> {
         payer: payerSigner,
         credential: credentialAddr,
         authority: issuerSigner,
-        name: CREDENTIAL_NAME,
+        name: credentialName,
         signers: [issuer.publicKey.toBase58() as Address],
       }),
     ],
@@ -147,7 +152,7 @@ export async function bootstrapSas(h: GateHarness): Promise<SasContext> {
         authority: issuerSigner,
         credential: credentialAddr,
         schema: schemaAddr,
-        name: SCHEMA_NAME,
+        name: schemaName,
         description: "Human verification level for agentic-dni gate",
         layout: SCHEMA_LAYOUT,
         fieldNames: FIELD_NAMES,
@@ -167,6 +172,11 @@ export async function bootstrapSas(h: GateHarness): Promise<SasContext> {
     schemaAccount,
     rpc,
   };
+}
+
+/** Bootstrap del issuer canónico de la demo. */
+export function bootstrapSas(h: GateHarness): Promise<SasContext> {
+  return bootstrapIssuer(h);
 }
 
 /** PDA de la attestation de `wallet` bajo el issuer del contexto. */

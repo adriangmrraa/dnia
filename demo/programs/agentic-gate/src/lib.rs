@@ -219,6 +219,19 @@ pub mod agentic_gate {
         });
         Ok(())
     }
+
+    /// El owner revoca el mandato — el próximo `pay` revierte MandateRevoked
+    /// (beat 6). El mandato sigue existiendo (auditable por el dashboard).
+    pub fn revoke_mandate(ctx: Context<RevokeMandate>) -> Result<()> {
+        ctx.accounts.mandate.revoked = true;
+        Ok(())
+    }
+
+    /// El owner cierra el mandato: devuelve el rent y permite re-init
+    /// (reparación de demo — crea otro mandato limpio para el mismo agente).
+    pub fn close_mandate(_ctx: Context<CloseMandate>) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -307,6 +320,32 @@ pub struct Pay<'info> {
     pub service_ata: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct RevokeMandate<'info> {
+    #[account(
+        mut,
+        seeds = [MANDATE_SEED, mandate.owner.as_ref(), mandate.agent.as_ref()],
+        bump = mandate.bump,
+        has_one = owner @ GateError::Unauthorized,
+    )]
+    pub mandate: Account<'info, Mandate>,
+    pub owner: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CloseMandate<'info> {
+    #[account(
+        mut,
+        close = owner,
+        seeds = [MANDATE_SEED, mandate.owner.as_ref(), mandate.agent.as_ref()],
+        bump = mandate.bump,
+        has_one = owner @ GateError::Unauthorized,
+    )]
+    pub mandate: Account<'info, Mandate>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
 }
 
 /// Configuración global del gate: a qué issuer SAS y schema confiar.
