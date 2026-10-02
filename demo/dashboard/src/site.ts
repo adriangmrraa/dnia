@@ -19,7 +19,7 @@ export const SAS_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
 // Es la ÚNICA constante que hay que tocar — todas las páginas la leen de acá.
 // Mientras sea `null`, el sitio muestra "repo por publicar" en vez de un link.
 // ────────────────────────────────────────────────────────────────────────────
-export const GITHUB_REPO_URL: string | null = null;
+export const GITHUB_REPO_URL: string | null = "https://github.com/adriangmrraa/dnia";
 
 export const short = (s?: string | null) =>
   s ? `${s.slice(0, 6)}…${s.slice(-4)}` : "—";
