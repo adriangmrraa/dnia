@@ -17,21 +17,12 @@
  * - expiry = 0 → sin expiración.
  */
 import {
-  AccountRole,
   createKeyPairSignerFromBytes,
   createSolanaRpc,
   type Address,
-  type Instruction as KitInstruction,
   type TransactionSigner,
 } from "@solana/kit";
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  sendAndConfirmTransaction,
-} from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   deriveAttestationPda,
   deriveCredentialPda,
@@ -47,6 +38,7 @@ import {
   type Schema,
 } from "sas-lib";
 import { fundSol, GateHarness } from "./surfnet";
+import { sendKitIxs } from "./kit_tx";
 
 export const SAS_PROGRAM_ID =
   "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
@@ -72,34 +64,7 @@ export interface SasContext {
   rpc: ReturnType<typeof createSolanaRpc>;
 }
 
-/** kit Instruction → web3 TransactionInstruction (roles bit0=writable bit1=signer). */
-export function toWeb3Ix(ix: KitInstruction): TransactionInstruction {
-  const writable = (r: number) =>
-    r === AccountRole.WRITABLE || r === AccountRole.WRITABLE_SIGNER;
-  const signer = (r: number) =>
-    r === AccountRole.READONLY_SIGNER || r === AccountRole.WRITABLE_SIGNER;
-  return new TransactionInstruction({
-    programId: new PublicKey(ix.programAddress),
-    keys: (ix.accounts ?? []).map((a) => ({
-      pubkey: new PublicKey(a.address),
-      isSigner: signer(a.role as number),
-      isWritable: writable(a.role as number),
-    })),
-    data: Buffer.from(ix.data ? Array.from(ix.data) : []),
-  });
-}
 
-/** Firma+envía ixs kit con keypairs web3 (feePayer = primer signer). */
-export async function sendKitIxs(
-  h: GateHarness,
-  ixs: KitInstruction[],
-  signers: Keypair[]
-): Promise<string> {
-  const tx = new Transaction().add(...ixs.map(toWeb3Ix));
-  return sendAndConfirmTransaction(h.connection, tx, signers, {
-    commitment: "confirmed",
-  });
-}
 
 /**
  * Bootstrap de un issuer: credential + schema v1 con fields [level,issued_at].
@@ -130,7 +95,8 @@ export async function bootstrapIssuer(
 
   // Tx 1: credential (signers autorizados = [issuer]).
   await sendKitIxs(
-    h,
+    h.connection,
+    h.payer,
     [
       getCreateCredentialInstruction({
         payer: payerSigner,
@@ -145,7 +111,8 @@ export async function bootstrapIssuer(
 
   // Tx 2: schema v1 (level:u8).
   await sendKitIxs(
-    h,
+    h.connection,
+    h.payer,
     [
       getCreateSchemaInstruction({
         payer: payerSigner,
@@ -211,7 +178,8 @@ export async function attest(
   });
 
   const signature = await sendKitIxs(
-    h,
+    h.connection,
+    h.payer,
     [
       getCreateAttestationInstruction({
         payer: ctx.payerSigner,
@@ -238,7 +206,8 @@ export async function revokeAttestation(
   const pda = await attestationPda(ctx, wallet);
   const eventAuthority = await deriveEventAuthorityAddress();
   return sendKitIxs(
-    h,
+    h.connection,
+    h.payer,
     [
       getCloseAttestationInstruction({
         payer: ctx.payerSigner,

@@ -67,10 +67,11 @@ El corazón del gate: los 14 pasos del diseño en una ix atómica.
 
 ## S5 — Deploy devnet + setup de actores reales
 
-- [ ] `scripts/setup_devnet.sh` (WSL, idempotente): keypairs demo → `demo/keys/` (gitignored) → airdrops → mint USDC-test + ATAs + `mintTo` → direcciones a `demo/.env`.
-- [ ] `scripts/setup_sas.ts`: credential + schema SAS REALES en devnet → imprime `sas_credential`/`sas_schema` → `demo/.env`.
-- [ ] `scripts/build_deploy.sh` (WSL): `anchor build` → `anchor deploy --provider.cluster devnet` → `initialize_config` con los SAS reales; program id a `.env.example`.
+- [x] `scripts/setup_devnet.sh` (WSL, idempotente): keypairs demo → `demo/keys/` (gitignored) → airdrops → mint USDC-test + ATAs + `mintTo` → direcciones a `demo/.env`.
+- [x] `scripts/setup_sas.ts`: credential + schema SAS REALES en devnet → imprime `sas_credential`/`sas_schema` → `demo/.env`.
+- [x] `scripts/build_deploy.sh` (WSL): `anchor build` → `anchor deploy --provider.cluster devnet` → `initialize_config` con los SAS reales; program id a `.env.example`.
 - **Aceptación:** programa live en devnet (verificable en explorer), `GateConfig` apuntando a SAS real, actores fondeados con USDC-test.
+- **Evidencia (02/10/2026, WSL→devnet real):** programa `D8pcKtezTzhVA6fw2SLpyFP5wY1DfUiPJCVmeqqX1xG2` deployado (192.280 bytes, slot 506707105, authority=owner); `initialize_config` tx `4sKDwxiWiigTvfg1eCkRKpLe1CUuBomk16LSkb2SHvTkJmByD3pdBd3F4mX1wtLjgBtnHi4HbdFRXaw9dw5eWNrg` → GateConfig PDA `AD8km3tHv3VC9gNV5L9WZKuDKJoLu5K4B9QdFjrUxNRv` con credential `JDe4sL4r73pQ3ovgkk95wNTo4SaS3U48R9PryQeZ3HRC` + schema `6bz7y1xCr8k6PzAGP1P9cwNp9Qp8RPbDjzDgod7M7ohK` REALES (txs `2YzJFZjF…`, `RPwXGECE…`); mint USDC `gmfqCXG6Jj5s3hS4uALJBHbN14ai8J8XWsp459vrpTk` + 100 USDC a agentes A/B. **Adaptaciones** (faucet 429 diario): issuer/agentes fondeados por `SystemProgram.transfer` del owner (0.05 SOL c/u, txs `5zHn4rTN…`,`5BG4sUYs…`,`3VCqp171…`); fix `new_keypair` stdout→stderr (contaminaba `.env`); fix newline final en upserts `.env`; program id derivado de `target/deploy/` keypair (keys/ no sync a WSL).
 - **Cubre:** R-09, R-10, INV-5.
 
 ## S6 — Issuer + agente CLI + servicio x402 (loop real en devnet)

@@ -6,7 +6,7 @@ import {
   PublicKey,
   SystemProgram,
 } from "@solana/web3.js";
-import { BN } from "bn.js";
+import BN from "bn.js";
 import { bootGate, fundSol, stopGate, GateHarness } from "./helpers/surfnet";
 import {
   attest,
