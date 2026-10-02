@@ -57,6 +57,7 @@
 | `admin` | `Pubkey` | Quien puede actualizar `sas_credential`/`sas_schema`/`min_level` |
 | `sas_credential` | `Pubkey` | Credential PDA del issuer confiable (nuestro mock issuer en la demo) |
 | `sas_schema` | `Pubkey` | Schema PDA esperado ("human-verified-agent" v1) |
+| `usdc_mint` | `Pubkey` | Mint USDC-test que `pay` exige en ambos ATAs — **post-verify W1** (un mint basura no cobra: `WrongMint`) |
 | `min_level` | `u8` | Nivel mínimo exigido en `attestation.data.level` (demo: 1) |
 | `bump` | `u8` | bump del PDA |
 
@@ -105,8 +106,9 @@ Schema SAS de la demo: name `agentic-dni-human-verified`, version `1`, fields `[
 
 | Ix | Firmante | Cuentas clave | Efecto | Requiere |
 |---|---|---|---|---|
-| `initialize_config(admin, sas_credential, sas_schema, min_level)` | payer/admin | `config` (init), system | crea GateConfig | una vez |
+| `initialize_config(admin, sas_credential, sas_schema, usdc_mint, min_level)` | payer/admin | `config` (init), system | crea GateConfig | una vez |
 | `update_config(...)` | `config.admin` | `config` | rota issuer/schema/min_level | admin |
+| `close_config()` | `config.admin` | `config` | cierra GateConfig, devuelve rent | migración de layout (post-verify W1: valida seeds+disc+`admin` a bytes crudos porque la cuenta vieja no deserializa) |
 | `init_mandate(agent, max_per_tx, daily_cap, payees[], expiry)` | `owner` | `mandate` (init seeds [owner,agent]), system | crea Mandate con contadores en 0 | CA-2 |
 | `revoke_mandate()` | `owner` | `mandate` | `revoked = true` | R-06, beat 6 |
 | `close_mandate()` | `owner` | `mandate` | cierra cuenta, devuelve rent | permite re-init post-revoke (reparación de demo) |
@@ -139,6 +141,12 @@ CHECKS — autorización (R-03):
 11. day = now/86400; spent = (mandate.day_index==day) ? mandate.spent_today : 0
     spent + amount <= mandate.daily_cap           else OverDailyCap         (CA-10)
 
+CHECKS — mint (post-verify W1, constraints de accounts — corren ANTES del cuerpo):
+11b. agent_ata.mint == config.usdc_mint              else WrongMint (CA-13)
+11c. service_ata.mint == config.usdc_mint            else WrongMint (CA-13)
+     (además agent_ata.owner==agent → AgentTokenMismatch y
+      service_ata.owner==service → ServiceTokenMismatch)
+
 EFECTOS:
 12. mandate.day_index = day; mandate.spent_today = spent + amount;
     mandate.total_spent += amount;
@@ -146,9 +154,10 @@ EFECTOS:
 INTERACCIÓN:
 13. CPI token::transfer(agent_ata → service_ata, amount)   — firma: agent (signer)   (R-04)
 
-RECIBO (R-05):
+RECIBO (R-05 — 7 campos post-verify W1):
 14. emit!(PaymentReceipt {
         payer: agent.key, payee: service.key, amount,
+        mint: config.usdc_mint,
         service_ref, mandate: mandate.key, timestamp: now })
 ```
 
@@ -173,11 +182,13 @@ Bootstrap (script `scripts/setup_sas.ts`, una vez): `getCreateCredentialInstruct
 `GET /api/premium` (y una instancia gemela `service-y` con otra wallet — mismo binario, otro `PAYEE_WALLET`):
 
 1. Sin `X-Payment` → `402` + requirements `{scheme:"agentic-gate", payee, price, mint, programId, invoice:uuid}` (D3/D7).
-2. Con `X-Payment: <sig>` → `getTransaction(sig, commitment confirmed, maxSupportedTransactionVersion)` → verifica: status ok, ix a `agentic_gate`, evento `PaymentReceipt` parseado con `payee==miWallet && amount>=price && service_ref==invoice` → `200 {data: <recurso JSON premium>, receipt}`.
+2. Con `X-Payment: <sig>` → `getTransaction(sig, commitment confirmed, maxSupportedTransactionVersion)` → verifica: status ok, ix a `agentic_gate`, evento `PaymentReceipt` parseado con `payee==miWallet && mint==USDC_MINT && amount>=price && service_ref==invoice` → `200 {data: <recurso JSON premium>, receipt}` (check de `mint` agregado post-verify W1).
 
 ### 5.3 `demo/agent` — CLI del agente (Node + TS)
 
 `agent pay <serviceUrl> <amount>`: request → parsea 402 → construye ix `pay` desde el **IDL generado** (cliente Anchor/`@solana/kit`) → envía tx → retry con `X-Payment` → imprime respuesta. Wallets: `keys/agent-a.json` / `keys/agent-b.json` (gitignored). Agentes A y B = mismo binario, distinta key.
+
+Flag `--skip-preflight` (post-verify W2): envío manual `sendRawTransaction({skipPreflight:true})` → `getTransaction` autoritativo → si `meta.err` imprime `pay REVERTIDO on-chain: <GateError>` + signature de la **tx fallida** (auditable en explorer). Lo usan los beats de revert de `run_beats.sh`; los pays felices conservan `.rpc()` con preflight normal.
 
 ### 5.4 `demo/dashboard` — audit UI (Vite + React, read-only, sin wallet)
 

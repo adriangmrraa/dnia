@@ -20,7 +20,8 @@ Mapa 1:1 CA → caso. Todo revert lleva doble assert: **error distinguible** + *
 |---|---|---|---|
 | CA-1 | `bootstrap SAS emite attestation de A` | issuer crea credential+schema+`attest(agentA, level=1)` en `before()` | `fetchAttestation` la lee en la PDA derivada; `data` decodifica `{level, issued_at}` únicamente — sin PII (INV-1) |
 | CA-2 | `init_mandate persiste policy` | owner firma `init_mandate(A, 5e6, cap, [X], expiry=mañana)` | Mandate PDA: campos exactos, `spent_today=total_spent=0`, ligado a (owner,A) |
-| CA-3 | `pay feliz $0.50` | A attested + mandato cubre | tx confirma; `ataX` +=500000; evento con 6 campos correctos; `spent_today`+=500000 |
+| CA-3 | `pay feliz $0.50` | A attested + mandato cubre | tx confirma; `ataX` +=500000; evento con 6 campos correctos (7 post-W1: incluye `mint`); `spent_today`+=500000 |
+| CA-13 (post-verify W1) | `pay` con mint ajeno | ATA de mint distinto al `usdc_mint` del gate | tx revierte `WrongMint`; sin transfer; sin evento |
 | CA-4 | `agente huérfano revierte` | B sin attestation → `pay(0.5, X)` | `AttestationMissing`; `ataX` sin cambio; sin evento |
 | CA-5a | `over-limit revierte` | A → `pay(10, X)` | `OverPerTxLimit`; sin efectos |
 | CA-5b | `payee no whitelisted revierte` | A → `pay(0.5, Y)` | `PayeeNotWhitelisted`; sin efectos |

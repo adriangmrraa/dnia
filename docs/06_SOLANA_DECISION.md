@@ -28,7 +28,7 @@
 
 | Opciones | Evaluación |
 |---|---|
-| **Event log Anchor `emit!`** (elegido) | El recibo es efecto colateral de `pay`: `emit!(PaymentReceipt{...})` queda en los logs de la tx (`Program data: <b64>`), indexable por `getTransaction`. Costo ~0 (sin cuenta, sin rent). Cumple R-05: 6 campos tipados, legible por el dashboard parseando logs con el IDL. INV-4: ningún programa extra. |
+| **Event log Anchor `emit!`** (elegido) | El recibo es efecto colateral de `pay`: `emit!(PaymentReceipt{...})` queda en los logs de la tx (`Program data: <b64>`), indexable por `getTransaction`. Costo ~0 (sin cuenta, sin rent). Cumple R-05: 6 campos tipados (7 post-verify W1 — se agregó `mint`), legible por el dashboard parseando logs con el IDL. INV-4: ningún programa extra. |
 | Cuenta PDA de recibo por pago | Cada pago crea `Receipt` account (~rent 0.002 SOL + cuenta extra en la ix). Ventaja única: **legible por programas** (composición: refund-exige-recibo, acceso-condicionado-a-compra). Ningún flujo del MVP consume recibos on-chain → rent + complejidad sin retorno hoy. |
 | Memo program | Hack: datos en log sin tipado, sin discoverability por schema. Peor que `emit!` en todo. |
 

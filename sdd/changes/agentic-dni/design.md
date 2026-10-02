@@ -44,13 +44,16 @@ Layouts detallados con tipos y seeds: `07_ARCHITECTURE.md` §2.
 
 Orden exacto (todo en una tx — INV-2): **identidad** → `attestation.owner==SAS` (`AttestationMissing`) → re-derivación PDA (`IssuerNotRecognized`, CA-12) → deserializa (`AttestationMissing`) → `expiry` (`AttestationExpired`, CA-8) → `level>=min_level` (`AttestationLevelTooLow`). **Autorización** → `mandate.agent==signer` (`MandateBoundToOtherAgent`, CA-11) → `!revoked` (`MandateRevoked`, beat 6) → `expiry` (`MandateExpired`, CA-9) → whitelist (`PayeeNotWhitelisted`, beat 5b) → `amount<=max_per_tx` (`OverPerTxLimit`, beat 5a) → `spent+amount<=daily_cap` con reset por `day_index` (`OverDailyCap`, CA-10). **Efectos** → contadores del mandato. **Interacción** → CPI `token::transfer` firmado por el agente. **Recibo** → `emit!(PaymentReceipt{payer, payee, amount, service_ref, mandate, timestamp})`.
 
+> **Post-verify W1 (sesión 18):** `GateConfig` gana `usdc_mint` y `Pay` exige `agent_ata.mint == service_ata.mint == config.usdc_mint` → `WrongMint` (constraints de accounts, antes del cuerpo); `PaymentReceipt` pasa a 7 campos incluyendo `mint`; `service-x` verifica `receipt.mint`. Migración del singleton vía ix nueva `close_config` + re-init (mismo PDA).
+> **Post-verify W2 (sesión 18):** el agent CLI gana `--skip-preflight` para los pays que revierten (beats 4/5/6) — la tx aterriza fallida on-chain con signature real en lugar de morir en la simulación client-side.
+
 Errores distinguibles por variante de `GateError` → visibles en logs/explorer/dashboard (satisface "motivo distinguible" R-02/R-03).
 
 ## 6. Instrucciones y API off-chain
 
-Programa: `initialize_config`, `update_config`, `init_mandate` (owner firma policy completa incl. whitelist — CA-2), `revoke_mandate` (beat 6), `close_mandate` (re-init post-revoke), `pay`. `update_mandate` (edición de whitelist en runtime) queda **LATER** — ningún beat/CA lo exige.
+Programa: `initialize_config` (con `usdc_mint` post-W1), `update_config`, `close_config` (migración de layout, post-W1), `init_mandate` (owner firma policy completa incl. whitelist — CA-2), `revoke_mandate` (beat 6), `close_mandate` (re-init post-revoke), `pay`. `update_mandate` (edición de whitelist en runtime) queda **LATER** — ningún beat/CA lo exige.
 
-Off-chain (`07_ARCHITECTURE.md` §5): issuer `POST /attest|/revoke`, `GET /status/:wallet`; service-x `GET /api/premium` (402→verify→200); agent CLI `pay <url> <amount>`; dashboard lee via `getSignaturesForAddress(mandate)` + parse `Program data:` + `fetchAttestation`. Repo layout completo bajo `demo/` (anchor workspace + `services/` + `dashboard/` + `scripts/`): `07_ARCHITECTURE.md` §6. `platform/` intocable; keypairs en `demo/keys/` gitignored (INV-5).
+Off-chain (`07_ARCHITECTURE.md` §5): issuer `POST /attest|/revoke`, `GET /status/:wallet`; service-x `GET /api/premium` (402→verify→200); agent CLI `pay <url> <amount>` (`--skip-preflight` en reverts — ver nota post-verify W2); dashboard lee via `getSignaturesForAddress(mandate)` + parse `Program data:` + `fetchAttestation`. Repo layout completo bajo `demo/` (anchor workspace + `services/` + `dashboard/` + `scripts/`): `07_ARCHITECTURE.md` §6. `platform/` intocable; keypairs en `demo/keys/` gitignored (INV-5).
 
 ## 7. Build / test / deploy (toolchain real)
 
