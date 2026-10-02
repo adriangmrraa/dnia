@@ -54,7 +54,6 @@
     font-size: clamp(.95rem, 1.55vw, 1.2rem); color: #c9d1d9;
   }
   .step b { color: #e6edf3; }
-  .step .rv { border-left-color: #f85149; }
   table { border-collapse: collapse; margin-top: 1.4rem; width: 100%; }
   th { text-align: left; color: #8b949e; font-weight: 500; font-size: .95rem;
        border-bottom: 1px solid #30363d; padding: .5rem .7rem; }
@@ -86,6 +85,34 @@
   }
   .badge.g { background: #23863633; color: #3fb950; }
   .badge.r { background: #f8514933; color: #f85149; }
+  .diagram { margin-top: 1.4rem; width: 100%; max-width: 62em; }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  svg text { font-family: ui-monospace, Menlo, monospace; }
+  .box { fill: #161b22; stroke: #30363d; rx: 10; }
+  .box-acc { fill: #1f6feb22; stroke: #58a6ff; }
+  .box-ok { fill: #23863622; stroke: #3fb950; }
+  .box-bad { fill: #f8514922; stroke: #f85149; }
+  .t { fill: #e6edf3; font-weight: 600; }
+  .ts { fill: #8b949e; font-size: 12px; }
+  .tacc { fill: #58a6ff; }
+  .tok { fill: #3fb950; }
+  .tbad { fill: #f85149; }
+  .arrow { stroke: #8b949e; stroke-width: 2; fill: none; }
+  .arrow-ok { stroke: #3fb950; }
+  .arrow-bad { stroke: #f85149; stroke-dasharray: 6 4; }
+
+  /* ── Print → PDF: cada slide = una página landscape 16:9 ── */
+  @media print {
+    body { overflow: visible; height: auto; }
+    .slide {
+      display: flex !important; page-break-after: always;
+      height: 100vh; padding: 5vh 7vw;
+    }
+    .nav, .pageno, .notes { display: none !important; }
+    a { color: #58a6ff; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: 1280px 720px; margin: 0; }
 </style>
 </head>
 <body>
@@ -117,7 +144,37 @@
   <div class="notes">Para un merchant/facilitator esto es fraude sin contraparte, chargebacks sin defensa, liability sin ancla. No es futurista: x402 ya mueve plata.</div>
 </section>
 
-<!-- 3 · POR QUÉ AHORA -->
+<!-- 3 · PROBLEMA VISUAL: el hueco en el pago -->
+<section class="slide">
+  <div class="kicker">El hueco, visualmente</div>
+  <h2>Un pago hoy: plata sí, contexto no</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 340">
+      <rect class="box" x="20" y="120" width="200" height="90" rx="10"/>
+      <text class="t" x="120" y="158" text-anchor="middle" font-size="16">Agente IA</text>
+      <text class="ts" x="120" y="182" text-anchor="middle">wallet del dueño</text>
+
+      <rect class="box" x="740" y="120" width="200" height="90" rx="10"/>
+      <text class="t" x="840" y="158" text-anchor="middle" font-size="16">Servicio / API</text>
+      <text class="ts" x="840" y="182" text-anchor="middle">cobra en USDC</text>
+
+      <line class="arrow" x1="220" y1="165" x2="740" y2="165"/>
+      <polygon fill="#8b949e" points="730,158 745,165 730,172"/>
+      <text class="t" x="480" y="150" text-anchor="middle" font-size="15">transfer SPL · $0.50 USDC</text>
+      <text class="ts" x="480" y="240" text-anchor="middle">la chain ve esto — nada más</text>
+
+      <rect class="box-bad" x="300" y="260" width="360" height="60" rx="10"/>
+      <text class="tbad" x="480" y="285" text-anchor="middle" font-size="14">¿quién es? ¿autorizado? ¿para qué?</text>
+      <text class="ts" x="480" y="305" text-anchor="middle">invisible para la transacción</text>
+    </svg>
+  </div>
+  <p class="sub">El ledger registra <b>que</b> la plata se movió. No registra
+  <b>quién</b> la autorizó ni <b>bajo qué condiciones</b>. El hueco es de
+  contexto, no de dinero.</p>
+  <div class="notes">Visual del hueco: la tx deja huella del dinero pero no del contrato social. El merchant cobra y queda solo ante la disputa.</div>
+</section>
+
+<!-- 4 · POR QUÉ AHORA -->
 <section class="slide">
   <div class="kicker">Por qué ahora</div>
   <h2>Los rieles ganaron. Falta la cerradura.</h2>
@@ -130,7 +187,35 @@
   <div class="notes">Timing literal: la ventana se abrió esta semana con 8004. Los ganadores anteriores hicieron el rail; nosotros hacemos el gate.</div>
 </section>
 
-<!-- 4 · SOLUCIÓN -->
+<!-- 5 · STACK VISUAL: dónde vivimos -->
+<section class="slide">
+  <div class="kicker">Dónde encajamos</div>
+  <h2>El stack del agente que paga</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 380">
+      <rect class="box" x="60" y="20" width="840" height="64" rx="10"/>
+      <text class="t" x="480" y="48" text-anchor="middle" font-size="15">Aplicaciones / merchants / APIs</text>
+      <text class="ts" x="480" y="70" text-anchor="middle">lo que el agente quiere comprar</text>
+
+      <rect class="box" x="60" y="104" width="840" height="64" rx="10"/>
+      <text class="t" x="480" y="132" text-anchor="middle" font-size="15">Rieles x402 — MCPay · Latinum · PayAI</text>
+      <text class="ts" x="480" y="154" text-anchor="middle">la tubería que mueve la plata (ya premiada)</text>
+
+      <rect class="box-acc" x="60" y="188" width="840" height="80" rx="10"/>
+      <text class="tacc" x="480" y="220" text-anchor="middle" font-size="17" font-weight="700">dnia — la cerradura: identidad + mandato + recibo</text>
+      <text class="ts" x="480" y="246" text-anchor="middle">quién puede pasar por el riel, y bajo qué autorización</text>
+
+      <rect class="box" x="60" y="288" width="840" height="64" rx="10"/>
+      <text class="t" x="480" y="316" text-anchor="middle" font-size="15">Solana — liquidación y evidencia pública</text>
+      <text class="ts" x="480" y="338" text-anchor="middle">donde todo esto es exigible y auditable</text>
+    </svg>
+  </div>
+  <p class="sub">No competimos con los rieles ni con la chain: somos la capa
+  que les faltaba — y que cada uno puede adoptar con un hook.</p>
+  <div class="notes">El slide del encaje: no somos otro riel ni otra wallet. Somos el gate que los rieles pueden exigir.</div>
+</section>
+
+<!-- 6 · SOLUCIÓN -->
 <section class="slide">
   <div class="kicker">La solución</div>
   <h2>Tres primitivas, un programa</h2>
@@ -142,7 +227,7 @@
   <div class="notes">No es un token, no es un registry, no es middleware. Es una primitiva de pago: autorización + identidad + evidencia en un solo programa.</div>
 </section>
 
-<!-- 5 · EL GATE -->
+<!-- 7 · EL GATE -->
 <section class="slide">
   <div class="kicker">Cómo funciona</div>
   <h2>El gate es atómico — o pasa todo, o nada</h2>
@@ -158,7 +243,50 @@
   <div class="notes">La frase técnica: enforcement estructural, no opcional. La autorización no es un documento que el merchant mira — es una regla que el programa ejecuta.</div>
 </section>
 
-<!-- 6 · EVIDENCIA -->
+<!-- 8 · GATE VISUAL: anatomía de la tx -->
+<section class="slide">
+  <div class="kicker">La transacción, por dentro</div>
+  <h2>Una tx: dos lecturas, un movimiento, una evidencia</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 420">
+      <rect class="box" x="20" y="30" width="220" height="76" rx="10"/>
+      <text class="t" x="130" y="60" text-anchor="middle" font-size="15">Attestation PDA (SAS)</text>
+      <text class="ts" x="130" y="82" text-anchor="middle">"humano verificado · nivel 2"</text>
+
+      <rect class="box" x="20" y="126" width="220" height="76" rx="10"/>
+      <text class="t" x="130" y="156" text-anchor="middle" font-size="15">Mandate PDA</text>
+      <text class="ts" x="130" y="178" text-anchor="middle">max $5 · cap $10/día · solo X</text>
+
+      <rect class="box-acc" x="370" y="78" width="220" height="76" rx="10"/>
+      <text class="tacc" x="480" y="108" text-anchor="middle" font-size="16" font-weight="700">programa gate</text>
+      <text class="ts" x="480" y="130" text-anchor="middle">verifica + mueve + emite</text>
+
+      <line class="arrow" x1="240" y1="68" x2="370" y2="100"/>
+      <line class="arrow" x1="240" y1="164" x2="370" y2="130"/>
+
+      <rect class="box-ok" x="690" y="30" width="250" height="76" rx="10"/>
+      <text class="tok" x="815" y="60" text-anchor="middle" font-size="15">✓ transfer USDC</text>
+      <text class="ts" x="815" y="82" text-anchor="middle">agente → servicio</text>
+
+      <rect class="box-ok" x="690" y="126" width="250" height="76" rx="10"/>
+      <text class="tok" x="815" y="156" text-anchor="middle" font-size="15">✓ PaymentReceipt</text>
+      <text class="ts" x="815" y="178" text-anchor="middle">7 campos · auditable</text>
+
+      <line class="arrow arrow-ok" x1="590" y1="98" x2="690" y2="68"/>
+      <line class="arrow arrow-ok" x1="590" y1="134" x2="690" y2="164"/>
+
+      <rect class="box-bad" x="310" y="290" width="340" height="90" rx="10"/>
+      <text class="tbad" x="480" y="322" text-anchor="middle" font-size="15">si un check falla → REVERT total</text>
+      <text class="ts" x="480" y="346" text-anchor="middle">ni el pago ni el recibo existen</text>
+      <text class="ts" x="480" y="366" text-anchor="middle">la plata nunca se mueve</text>
+
+      <line class="arrow arrow-bad" x1="480" y1="154" x2="480" y2="290"/>
+    </svg>
+  </div>
+  <div class="notes">Anatomía de la instrucción: dos cuentas se leen (attestation + mandato), el programa decide, y solo si todo cierra se transfiere y se emite recibo.</div>
+</section>
+
+<!-- 9 · EVIDENCIA -->
 <section class="slide">
   <div class="kicker">Evidencia — no slides, la chain</div>
   <h2>6 beats, todos con signature real en devnet</h2>
@@ -177,19 +305,19 @@
   <div class="notes">Acá mostrar el explorer en vivo: abrir una tx fallida y señalar el Error Code. Cualquier jurado puede verificarlo.</div>
 </section>
 
-<!-- 7 · DEMO -->
+<!-- 10 · DEMO -->
 <section class="slide">
   <div class="kicker">Demo en vivo</div>
   <h2>Un click → 6 beats → explorer</h2>
-  <div class="big">El sitio (<span class="mono">localhost:3404</span>) corre la demo
-  completa contra devnet desde el botón <b>▶ Correr demo</b>: terminal en vivo,
-  signatures linkeadas, dashboard auditando en tiempo real.</div>
+  <div class="big">El sitio corre la demo completa contra devnet desde el botón
+  <b>▶ Correr demo</b>: terminal en vivo, signatures linkeadas, dashboard
+  auditando en tiempo real.</div>
   <p class="sub">Dashboard: ledger de pagos aceptados/rechazados en criollo, estado
   del mandato y attestations — todo leído de la chain, nada mockeado.</p>
   <div class="notes">Si hay tiempo acá: abrir /demo, correr, mostrar el ledger actualizándose. Si no, la evidencia estática ya está on-chain.</div>
 </section>
 
-<!-- 8 · ADOPCIÓN -->
+<!-- 11 · ADOPCIÓN -->
 <section class="slide">
   <div class="kicker">Adopción — cero fricción</div>
   <h2>Sin cuenta. Sin API key. Sin permiso.</h2>
@@ -207,7 +335,44 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">Contrastar con Skyfire: suscripción + API key + su verificador. Acá un dev copia un snippet y está adoptando el protocolo.</div>
 </section>
 
-<!-- 9 · PRIVACIDAD -->
+<!-- 12 · ADOPCIÓN VISUAL: la vuelta por actor -->
+<section class="slide">
+  <div class="kicker">La vuelta completa</div>
+  <h2>Tres actores, una interacción cada uno</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 330">
+      <rect class="box" x="20" y="40" width="280" height="120" rx="10"/>
+      <text class="t" x="160" y="70" text-anchor="middle" font-size="15">① Humano (una vez)</text>
+      <text class="ts" x="160" y="96" text-anchor="middle">KYC con el issuer (off-chain)</text>
+      <text class="ts" x="160" y="116" text-anchor="middle">+ firma el mandato on-chain:</text>
+      <text class="ts" x="160" y="136" text-anchor="middle">"máx $5/tx · $20/mes · solo X"</text>
+
+      <rect class="box" x="340" y="40" width="280" height="120" rx="10"/>
+      <text class="t" x="480" y="70" text-anchor="middle" font-size="15">② Agente (cada pago)</text>
+      <text class="ts" x="480" y="96" text-anchor="middle">no presenta nada —</text>
+      <text class="ts" x="480" y="116" text-anchor="middle">el programa chequea attestation</text>
+      <text class="ts" x="480" y="136" text-anchor="middle">+ mandato en la misma tx</text>
+
+      <rect class="box" x="660" y="40" width="280" height="120" rx="10"/>
+      <text class="t" x="800" y="70" text-anchor="middle" font-size="15">③ Servicio (una vez)</text>
+      <text class="ts" x="800" y="96" text-anchor="middle">createGate + ~10 líneas</text>
+      <text class="ts" x="800" y="116" text-anchor="middle">sin cuenta · sin API key</text>
+      <text class="ts" x="800" y="136" text-anchor="middle">la chain es la API</text>
+
+      <line class="arrow" x1="300" y1="100" x2="340" y2="100"/>
+      <polygon fill="#8b949e" points="332,94 346,100 332,106"/>
+      <line class="arrow" x1="620" y1="100" x2="660" y2="100"/>
+      <polygon fill="#8b949e" points="652,94 666,100 652,106"/>
+
+      <rect class="box-ok" x="230" y="210" width="500" height="80" rx="10"/>
+      <text class="tok" x="480" y="242" text-anchor="middle" font-size="15">resultado: mercado con accountability</text>
+      <text class="ts" x="480" y="266" text-anchor="middle">el verificado accede · el anónimo no · el estafador deja rastro</text>
+    </svg>
+  </div>
+  <div class="notes">Cada actor hace UNA cosa. La fricción se fue a cero deliberadamente: nadie crea cuenta con nosotros, nadie nos pide permiso.</div>
+</section>
+
+<!-- 13 · PRIVACIDAD -->
 <section class="slide">
   <div class="kicker">Privacidad</div>
   <h2>Accountability judicial — no vigilancia</h2>
@@ -218,12 +383,38 @@ app.get("/api/premium", async (req, res) =&gt; {
   <p class="sub">La credencial no te identifica — <b>te habilita</b>: el agente
   verificado accede a mercados que el anónimo no puede. Y si el agente estafa,
   el rastro del pago es la feature: el merchant lo adopta porque el recibo
-  auditable es su defensa en una disputa. (Skyfire: issuer y verificador en el
-  mismo servidor privado — una empresa lo ve todo.)</p>
+  auditable es su defensa en una disputa.</p>
   <div class="notes">Este es el resguardo: accountability sin mapa de vigilancia. Las dos capas conviven porque son distintas: la trazabilidad del pago la compra el merchant; la privacidad del humano la acepta el usuario.</div>
 </section>
 
-<!-- 10 · NO ES REGULATORIO -->
+<!-- 14 · PRIVACIDAD VISUAL: capas -->
+<section class="slide">
+  <div class="kicker">El modelo de privacidad</div>
+  <h2>Tres capas, tres visibilidades</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 380">
+      <rect class="box-ok" x="60" y="20" width="840" height="96" rx="10"/>
+      <text class="tok" x="480" y="52" text-anchor="middle" font-size="16">PÚBLICO — la chain</text>
+      <text class="ts" x="480" y="76" text-anchor="middle">"humano verificado · nivel · issuer · timestamp · revocado?"</text>
+      <text class="ts" x="480" y="96" text-anchor="middle">+ recibos de pago (pagador, payee, monto, mandato)</text>
+
+      <rect class="box" x="60" y="140" width="840" height="96" rx="10"/>
+      <text class="t" x="480" y="172" text-anchor="middle" font-size="16">ISSUER — off-chain</text>
+      <text class="ts" x="480" y="196" text-anchor="middle">identidad real (KYC) — nunca toca la chain</text>
+      <text class="ts" x="480" y="216" text-anchor="middle">distribuido por issuer, sin verificador único</text>
+
+      <rect class="box-acc" x="60" y="260" width="840" height="96" rx="10"/>
+      <text class="tacc" x="480" y="292" text-anchor="middle" font-size="16">REVELADO — solo por proceso legal</text>
+      <text class="ts" x="480" y="316" text-anchor="middle">un juez → ordena al issuer → se sabe quién era</text>
+      <text class="ts" x="480" y="336" text-anchor="middle">nadie puede reconstruir identidades desde la chain sola</text>
+    </svg>
+  </div>
+  <p class="sub">Skyfire junta las dos primeras capas en un servidor privado:
+  una empresa lo ve todo. Acá están separadas por diseño.</p>
+  <div class="notes">La separación es la propuesta: pública = suficiente para verificar; issuer = suficiente para accountability judicial; ninguna parte sola puede armar el mapa completo.</div>
+</section>
+
+<!-- 15 · NO ES REGULATORIO -->
 <section class="slide">
   <div class="kicker">Posición</div>
   <h2>El ecosistema se resguarda solo</h2>
@@ -236,7 +427,7 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">Defensa si el jurado pregunta por regulación: somos opt-in y de mercado. La regulación valida el problema, no sostiene el producto.</div>
 </section>
 
-<!-- 11 · COMPETENCIA -->
+<!-- 16 · COMPETENCIA -->
 <section class="slide">
   <div class="kicker">Competencia</div>
   <h2>~25 lo intentaron en Colosseum. Cero ganó. Ninguno hizo esto.</h2>
@@ -252,7 +443,7 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">El vacío verificado: nadie hizo credencial de humano-verificado exigible económicamente — verificable por terceros dentro de programas.</div>
 </section>
 
-<!-- 12 · MODELO -->
+<!-- 17 · MODELO -->
 <section class="slide">
   <div class="kicker">Modelo — honesto</div>
   <h2>Protocolo abierto hoy; negocio en las orillas</h2>
@@ -264,7 +455,7 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">No fingir tokenomics. La honestidad es el pitch: infra pura monetiza tarde — lo declaramos y mostramos dónde está el valor.</div>
 </section>
 
-<!-- 13 · ESTADO -->
+<!-- 18 · ESTADO -->
 <section class="slide">
   <div class="kicker">Estado real</div>
   <h2>Hecho, no prometido</h2>
@@ -275,7 +466,7 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">La honestidad como señal: un jurado que encuentra un mock no declarado mata el pitch; uno declarado suma credibilidad.</div>
 </section>
 
-<!-- 14 · CIERRE -->
+<!-- 19 · CIERRE -->
 <section class="slide">
   <div class="kicker">dnia</div>
   <div class="quote">Los rails de pagos para agentes ya ganaron premios.
@@ -289,8 +480,8 @@ app.get("/api/premium", async (req, res) =&gt; {
   <div class="notes">CTA: no "gracias" — "abrí el explorer y verificalo vos". Eso es lo memorable: los reverts son reales.</div>
 </section>
 
-<div class="pageno" id="pn">1 / 14</div>
-<div class="nav"><span class="keys">← → navegar · N notas · F fullscreen</span></div>
+<div class="pageno" id="pn">1 / 19</div>
+<div class="nav"><span class="keys">← → navegar · N notas · F fullscreen · P exportar PDF</span></div>
 
 <script>
   const slides = [...document.querySelectorAll('.slide')];
@@ -313,6 +504,7 @@ app.get("/api/premium", async (req, res) =&gt; {
       document.fullscreenElement
         ? document.exitFullscreen()
         : document.documentElement.requestFullscreen();
+    if (e.key === 'p' || e.key === 'P') window.print();
   });
   document.addEventListener('click', e => {
     if (e.clientX > innerWidth / 2) show(i + 1); else show(i - 1);
