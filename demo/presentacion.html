@@ -7,15 +7,75 @@
 <style>
   * { box-sizing: border-box; margin: 0; }
   body {
-    background: #0d1117; color: #e6edf3;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% -10%, #1f6feb14, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 10% 110%, #23863610, transparent 60%),
+      #0d1117;
+    color: #e6edf3;
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
     overflow: hidden; height: 100vh;
+  }
+  #bg {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+  #prog {
+    position: fixed; top: 0; left: 0; height: 3px; z-index: 20;
+    background: linear-gradient(90deg, #58a6ff, #3fb950);
+    width: 0%; transition: width .45s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 12px #58a6ff88;
   }
   .slide {
     display: none; height: 100vh; padding: 6vh 8vw 10vh;
     flex-direction: column; justify-content: center;
+    position: relative; z-index: 1;
   }
   .slide.on { display: flex; }
+
+  /* ── Entrada de slide ── */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(22px) scale(.992); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .slide.on > .kicker { animation: fadeUp .5s .05s both; }
+  .slide.on > h1, .slide.on > h2, .slide.on > .big, .slide.on > .quote {
+    animation: slideIn .55s .12s cubic-bezier(.2,.7,.3,1) both;
+  }
+  .slide.on > .sub { animation: fadeUp .5s .3s both; }
+  .slide.on .grid > *, .slide.on .flow > * {
+    animation: fadeUp .5s both;
+  }
+  .slide.on .grid > *:nth-child(1) { animation-delay: .22s; }
+  .slide.on .grid > *:nth-child(2) { animation-delay: .32s; }
+  .slide.on .grid > *:nth-child(3) { animation-delay: .42s; }
+  .slide.on .grid > *:nth-child(4) { animation-delay: .52s; }
+  .slide.on .flow > *:nth-child(1) { animation-delay: .22s; }
+  .slide.on .flow > *:nth-child(2) { animation-delay: .32s; }
+  .slide.on .flow > *:nth-child(3) { animation-delay: .42s; }
+  .slide.on .flow > *:nth-child(4) { animation-delay: .52s; }
+  .slide.on pre, .slide.on table, .slide.on .diagram, .slide.on .hero-badges {
+    animation: fadeUp .55s .28s both;
+  }
+
+  /* ── Flechas SVG con flujo animado ── */
+  @keyframes dashflow { to { stroke-dashoffset: -20; } }
+  .arrow { animation: dashflow 1.2s linear infinite; stroke-dasharray: 8 5; }
+  .arrow-ok { animation: dashflow 1s linear infinite; }
+  .arrow-bad { animation: none; }
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 #58a6ff00; }
+    50% { box-shadow: 0 0 18px 2px #58a6ff33; }
+  }
+  .card, pre { transition: transform .25s ease, border-color .25s ease; }
+  .card:hover { transform: translateY(-3px); border-color: #58a6ff; }
+  .badge { animation: fadeUp .4s both; }
+  .badge:nth-child(2) { animation-delay: .08s; }
+  .badge:nth-child(3) { animation-delay: .16s; }
+  .quote { animation: slideIn .6s .15s both, glowPulse 3.2s 1s ease-in-out infinite; }
   .kicker {
     color: #58a6ff; font-size: clamp(.8rem,1.4vw,1rem); font-weight: 600;
     letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2rem;
@@ -108,7 +168,8 @@
       display: flex !important; page-break-after: always;
       height: 100vh; padding: 5vh 7vw;
     }
-    .nav, .pageno, .notes { display: none !important; }
+    .nav, .pageno, .notes, #bg, #prog { display: none !important; }
+    .slide *, .slide { animation: none !important; transition: none !important; }
     a { color: #58a6ff; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
@@ -116,6 +177,9 @@
 </style>
 </head>
 <body>
+
+<canvas id="bg"></canvas>
+<div id="prog"></div>
 
 <!-- 1 · HOOK -->
 <section class="slide on">
@@ -484,14 +548,61 @@ app.get("/api/premium", async (req, res) =&gt; {
 <div class="nav"><span class="keys">← → navegar · N notas · F fullscreen · P exportar PDF</span></div>
 
 <script>
+  /* ── Fondo: constelación de nodos (red de agentes) ── */
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  let W, H, pts = [];
+  function resize() {
+    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    const n = Math.min(90, Math.floor(W * H / 22000));
+    pts = Array.from({length: n}, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+      r: Math.random() * 1.6 + .6,
+    }));
+  }
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of pts) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, 7);
+      ctx.fillStyle = '#58a6ff30';
+      ctx.fill();
+    }
+    for (let a = 0; a < pts.length; a++)
+      for (let b = a + 1; b < pts.length; b++) {
+        const dx = pts[a].x - pts[b].x, dy = pts[a].y - pts[b].y;
+        const d = dx * dx + dy * dy;
+        if (d < 130 * 130) {
+          ctx.beginPath();
+          ctx.moveTo(pts[a].x, pts[a].y);
+          ctx.lineTo(pts[b].x, pts[b].y);
+          ctx.strokeStyle = `rgba(88,166,255,${.14 * (1 - Math.sqrt(d) / 130)})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    requestAnimationFrame(tick);
+  }
+  addEventListener('resize', resize);
+  resize(); tick();
+
+  /* ── Navegación ── */
   const slides = [...document.querySelectorAll('.slide')];
   const notes = [...document.querySelectorAll('.notes')];
   const pn = document.getElementById('pn');
+  const prog = document.getElementById('prog');
   let i = 0;
   function show(n) {
     i = Math.max(0, Math.min(slides.length - 1, n));
-    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    slides.forEach((s, k) => {
+      if (k === i) { s.classList.remove('on'); void s.offsetWidth; s.classList.add('on'); }
+      else s.classList.remove('on');
+    });
     pn.textContent = (i + 1) + ' / ' + slides.length;
+    prog.style.width = ((i + 1) / slides.length * 100) + '%';
   }
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') show(i + 1);
