@@ -215,10 +215,12 @@ app.get("/api/premium", async (req, res) =&gt; {
     <div class="card"><h3 class="ok">On-chain se ve</h3><p>"hay un humano verificado nivel N detrás de este agente, emitido por issuer X" — nivel, timestamp, estado de revocación. <b>Nada más.</b></p></div>
     <div class="card"><h3 class="bad">On-chain NO está</h3><p>quién es el humano. La identidad real la guarda el issuer off-chain; revelarla exige <b>proceso legal hacia el issuer</b>. No hay DNI público ni trazabilidad masiva.</p></div>
   </div>
-  <p class="sub">Skyfire: issuer y verificador en el mismo servidor privado —
-  una empresa lo ve todo. Acá la credencial vive en la chain, la verifica
-  cualquiera, y el PII queda distribuido.</p>
-  <div class="notes">Este es el resguardo: accountability sin entregar un mapa de vigilancia. Diseño deliberado, no descuido.</div>
+  <p class="sub">La credencial no te identifica — <b>te habilita</b>: el agente
+  verificado accede a mercados que el anónimo no puede. Y si el agente estafa,
+  el rastro del pago es la feature: el merchant lo adopta porque el recibo
+  auditable es su defensa en una disputa. (Skyfire: issuer y verificador en el
+  mismo servidor privado — una empresa lo ve todo.)</p>
+  <div class="notes">Este es el resguardo: accountability sin mapa de vigilancia. Las dos capas conviven porque son distintas: la trazabilidad del pago la compra el merchant; la privacidad del humano la acepta el usuario.</div>
 </section>
 
 <!-- 10 · NO ES REGULATORIO -->

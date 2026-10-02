@@ -351,11 +351,51 @@ export default function Landing() {
           ))}
         </div>
         <p className="note">
-          el contraste con Skyfire: issuer y verificador viven en su servidor
-          privado — una empresa ve todo y la credencial muere con ella. Acá
-          la credencial vive en la chain (la verifica cualquiera, sin
-          permiso) y el PII queda distribuido donde corresponde.
+          la credencial no te identifica — <b>te habilita</b>: un agente
+          verificado accede a mercados que uno anónimo no puede. Y si el
+          agente estafa, el rastro público del pago es la feature — el
+          merchant lo adopta porque el recibo auditable es su defensa en una
+          disputa. Contraste con Skyfire: issuer y verificador viven en su
+          servidor privado — una empresa ve todo y la credencial muere con
+          ella. Acá la credencial vive en la chain (la verifica cualquiera,
+          sin permiso) y el PII queda distribuido donde corresponde.
         </p>
+      </section>
+
+      {/* ── El negocio ── */}
+      <section>
+        <h2 className="sect">Qué habilita para el negocio</h2>
+        <div className="adopters trio">
+          <article className="card">
+            <h3 className="prim">Defensa real en disputas</h3>
+            <p className="prim-q">para el merchant</p>
+            <p className="plain">
+              Cobrás solo a agentes con humano verificado detrás. Si el agente
+              estafa, el recibo on-chain — pagador, payee, monto, mandato,
+              timestamp — es tu evidencia.{" "}
+              <b>Sin rastro no hay reclamo posible: el rastro es la feature.</b>
+            </p>
+          </article>
+          <article className="card">
+            <h3 className="prim">Un mercado que el anonimato no toca</h3>
+            <p className="prim-q">para el servicio</p>
+            <p className="plain">
+              La credencial no identifica — <b>habilita</b>: los agentes
+              verificados acceden a lo que los anónimos no pueden. Ser
+              gateado es venderle a un segmento con plata real y dueño
+              responsable.
+            </p>
+          </article>
+          <article className="card">
+            <h3 className="prim">Accountability sin custodia</h3>
+            <p className="prim-q">para todos</p>
+            <p className="plain">
+              Ofrecés agentes verificados <b>sin tocar PII</b>: la identidad la
+              guarda el issuer, vos solo leés una cuenta pública. Adoptás
+              accountability sin convertirte en custodio de datos de nadie.
+            </p>
+          </article>
+        </div>
       </section>
 
       {/* ── Honestidad ── */}
