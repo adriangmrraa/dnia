@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dnia — brief de video de presentación</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: #0d1117; color: #e6edf3;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55; padding: 4rem 0;
+  }
+  .wrap { max-width: 60rem; margin: 0 auto; padding: 0 1.5rem; }
+  h1 { font-size: 2.2rem; margin-bottom: .4rem; }
+  .meta { color: #8b949e; font-size: .95rem; margin-bottom: 2.5rem; }
+  h2 {
+    color: #58a6ff; font-size: 1.15rem; text-transform: uppercase;
+    letter-spacing: .08em; margin: 2.6rem 0 .9rem;
+    border-bottom: 1px solid #30363d; padding-bottom: .4rem;
+  }
+  h3 { font-size: 1.05rem; margin: 1.4rem 0 .4rem; }
+  p, li { color: #c9d1d9; font-size: .98rem; }
+  ul, ol { padding-left: 1.4rem; margin: .5rem 0; }
+  li { margin: .3rem 0; }
+  .card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    padding: 1.1rem 1.3rem; margin: .8rem 0;
+  }
+  .scene { border-left: 3px solid #58a6ff; }
+  .scene.live { border-left-color: #3fb950; }
+  .scene .head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem; }
+  .scene h3 { margin: 0; }
+  .t { color: #d29922; font-family: ui-monospace, monospace; font-size: .85rem; }
+  .lbl { color: #8b949e; font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; margin-top: .7rem; }
+  code {
+    font-family: ui-monospace, Menlo, monospace; background: #21262d;
+    border-radius: 4px; padding: .1em .4em; font-size: .86em; color: #a5d6ff;
+  }
+  .vo {
+    font-style: italic; color: #e6edf3; background: #21262d55;
+    border-radius: 8px; padding: .8rem 1rem; margin: .4rem 0;
+    border-left: 3px solid #3fb950;
+  }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; }
+  th { text-align: left; color: #8b949e; font-weight: 500; font-size: .85rem;
+       border-bottom: 1px solid #30363d; padding: .4rem .6rem; }
+  td { padding: .45rem .6rem; border-bottom: 1px solid #21262d; font-size: .92rem; color: #c9d1d9; }
+  .ok { color: #3fb950; } .bad { color: #f85149; } .warn { color: #d29922; }
+  .kicker { color: #58a6ff; }
+  .check li { list-style: none; }
+  .check li::before { content: "☐ "; color: #58a6ff; }
+  .pill {
+    display: inline-block; background: #1f6feb33; color: #58a6ff;
+    border-radius: 99px; padding: .1rem .7rem; font-size: .8rem; margin-right: .4rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>dnia — brief del video de presentación</h1>
+<p class="meta">Base para producir el video pitch + demo de Colosseum.
+Objetivo: que quien lo vea entienda <b>todo</b> — el problema, la solución,
+que funciona de verdad, y por qué es distinto. Duración target: <b>~2:30–3:00</b>
+(el máximo del pitch video). Formato: <b>1920×1080 · 30fps</b>. Idioma: inglés
+recomendado para Colosseum (guion incluido en EN; versión ES abajo).</p>
+
+<h2>1 · Mensaje central (una frase)</h2>
+<div class="card">
+  <p><b>"Todo agente que paga tiene un humano verificado detrás — y lo exige el
+  programa, dentro de la transacción que mueve la plata."</b></p>
+  <p style="margin-top:.5rem" class="meta">Si el video logra que el jurado pueda
+  repetir esa frase, ganó. Todo lo demás son pruebas.</p>
+</div>
+
+<h2>2 · Audiencia y tono</h2>
+<ul>
+  <li><b>Quién mira:</b> jurados Colosseum (VCs + builders), facilitators x402, devs Solana. Vieron 200 pitches hoy — cero paciencia.</li>
+  <li><b>Tono:</b> directo, técnico, sobrio. Nada de hype ni "revolucionario". La evidencia on-chain habla sola.</li>
+  <li><b>Lo que NO mostrar:</b> no mostrar la terminal cruda larga, no slides con párrafos, no música con letra. Velocidad &gt; detalle.</li>
+  <li><b>Palabra prohibida:</b> "revolutionary", "cutting-edge", "game-changer". Y nada de promesas futuras en el cuerpo del video — solo roadmap al final.</li>
+</ul>
+
+<h2>3 · Estructura — 9 escenas</h2>
+<p class="meta">Regla DePitch: demo antes del minuto 2:00. La escena 6 (demo) es el corazón.</p>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 1 · HOOK</h3><span class="t">0:00 – 0:12</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>Fondo negro → texto grande: <i>"AI agents already move money on-chain."</i>
+  Luego: <i>"Nobody answers for them."</i> Detrás: la constelación de nodos del
+  deck, sutil.</p>
+  <p class="lbl">Locución (EN)</p>
+  <div class="vo">"AI agents are already paying for things on-chain. But when an
+  agent pays you… who do you sue if it scams you? Right now: nobody."</div>
+  <p class="lbl">Sonido</p><p>quiénFrío. Un solo whoosh al entrar la segunda línea.</p>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 2 · EL PROBLEMA</h3><span class="t">0:12 – 0:30</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>El diagrama del deck (slide 3): flecha USDC agente→servicio, y abajo las tres
+  preguntas en rojo: <i>who's behind it? what was authorized? what happened?</i></p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"When an agent pays, three questions have no answer: who's
+  behind it, what its owner actually authorized, and what it paid for. For a
+  merchant that's fraud with no counterparty — and no receipt to dispute."</div>
+  <p class="lbl">Sonido</p><p>Tres pops suaves, uno por pregunta apareciendo.</p>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 3 · TIMING</h3><span class="t">0:30 – 0:42</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>El diagrama de stack (slide 5): capas aplicaciones → rieles x402 (MCPay,
+  Latinum — logos/texto) → <b>dnia destacado</b> → Solana.</p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"The rails already exist — MCPay and Latinum won Colosseum
+  building x402 payment pipes. ERC-8004 just shipped pseudonymous agent
+  identity with no human layer. What's missing is the lock: who may pass
+  through those rails."</div>
+  <p class="lbl">Sonido</p><p>Click por capa apareciendo; chime al resaltar dnia.</p>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 4 · LA SOLUCIÓN</h3><span class="t">0:42 – 1:05</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>Las 3 primitivas como cards (slide 4): <b>Identity</b> (SAS attestation),
+  <b>Mandate</b> (owner-signed policy), <b>Receipt</b> (PaymentReceipt). Luego el
+  diagrama de la tx atómica (slide 8): las dos PDAs entrando al programa →
+  transfer + receipt o REVERT.</p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"dnia adds three primitives in one Solana program: a real SAS
+  attestation — a verified human behind the agent's wallet, no PII on-chain —,
+  an owner-signed mandate with limits and a payee whitelist, and a payment
+  receipt emitted in the same transaction. One instruction enforces all three
+  atomically: if a check fails, the whole transaction reverts — the money never
+  moves."</div>
+  <p class="lbl">Sonido</p><p>Pops por card; whoosh corto en el revert.</p>
+</div>
+
+<div class="card scene live">
+  <div class="head"><h3>Escena 5 · ADOPCIÓN (cero fricción)</h3><span class="t">1:05 – 1:25</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>Screen-recording corto de <code>/docs</code> scrolleando al snippet
+  <code>createGate(...)</code>, con zoom-in al código. Texto overlay:
+  <i>"No account. No API key. No permission."</i></p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"Adopting it is ten lines, not an onboarding: no account with
+  us, no API key, no permission. The chain is the API — the program, the
+  credential schema and the mint are already public on devnet."</div>
+  <p class="lbl">Sonido</p><p>Tecleo suave; pop en cada línea del overlay.</p>
+</div>
+
+<div class="card scene live">
+  <div class="head"><h3>Escena 6 · DEMO EN VIVO ⭐</h3><span class="t">1:25 – 2:05</span></div>
+  <p class="lbl">En pantalla — grabación real, la más importante del video</p>
+  <ol>
+    <li>Browser en <code>localhost:3404/demo</code> → click en <b>▶ Correr demo</b></li>
+    <li>Terminal en vivo corriendo los 6 beats (acelerar visualmente las esperas)</li>
+    <li>Veredicto <b>"LOS 6 BEATS OK"</b> + signatures apareciendo</li>
+    <li>Click en una signature de un beat fallido → <b>explorer abierto con
+    <code>err</code> y <code>Error Code: PayeeNotWhitelisted</code></b> en los logs</li>
+    <li>Paneo rápido al <code>/dashboard</code>: ledger con PAGO ACEPTADO/RECHAZADO
+    actualizándose solo</li>
+  </ol>
+  <p class="lbl">Locución</p>
+  <div class="vo">"And it's all live on devnet — watch. One click runs the full
+  script: an attestation, a mandate, a successful payment — and three rejections
+  that land as real failed transactions. This one says PayeeNotWhitelisted, in
+  the explorer, forever. The dashboard isn't a mock — it's reading the chain."</div>
+  <p class="lbl">Sonido</p><p>Ritmo crece; ping en cada signature; silencio un
+  beat antes del explorer (efecto).</p>
+  <p class="lbl">⚠️ Captura</p>
+  <p>Grabar con los servicios levantados (<code>bash scripts/start_services.sh</code>
+  + <code>dev_service.sh runner</code>). Zoom del browser al 110–125%. Recortar
+  barras del OS. Cursor visible.</p>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 7 · PRIVACIDAD</h3><span class="t">2:05 – 2:20</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>El diagrama de capas (slide 14): PÚBLICO / ISSUER / REVELADO-solo-por-ley.</p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"And it's not surveillance: the chain only shows 'a verified
+  human exists, level N'. The identity stays off-chain with the issuer —
+  unmasked only through legal process. Judicial accountability, not a public
+  registry of names."</div>
+  <p class="lbl">Sonido</p><p>Vuelve a calma. Un solo chime.</p>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 8 · COMPETENCIA + MODELO</h3><span class="t">2:20 – 2:40</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>Tabla comparativa (slide 16): Skyfire / ERC-8004 / dnia — la fila
+  <i>"enforceable inside the program"</i> resaltada. Luego una línea de texto:
+  <i>"Open protocol — revenue lives at the edges: issuers + facilitator
+  integrations."</i></p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"Skyfire does closed KYA — off-chain JWTs that die with the
+  company and can't be read by a program. ERC-8004 is pseudonymous. ~25
+  Colosseum projects tried adjacent ideas — zero won, none made
+  human-verification enforceable inside the payment itself. We're open,
+  issuer-agnostic, and complementary to the rails that already won."</div>
+</div>
+
+<div class="card scene">
+  <div class="head"><h3>Escena 9 · CIERRE / CTA</h3><span class="t">2:40 – 3:00</span></div>
+  <p class="lbl">En pantalla</p>
+  <p>Texto grande: <i>"The rails won. Nobody built who may pass through them.
+  We built the lock."</i> Debajo: repo <code>github.com/adriangmrraa/dnia</code>
+  · Apache-2.0 · "every signature above is on devnet — verify it yourself".</p>
+  <p class="lbl">Locución</p>
+  <div class="vo">"Every signature you just saw is a real devnet transaction —
+  open the explorer and check it yourself. dnia: the accountability layer for
+  agent payments. Open source, on Solana."</div>
+  <p class="lbl">Sonido</p><p>Cierre limpio. Sin fade de música — cortar en seco
+  tras la última palabra.</p>
+</div>
+
+<h2>4 · Guion completo — versión española (grabación alternativa)</h2>
+<div class="card">
+  <p class="vo" style="font-style:normal">
+  Los agentes IA ya pagan cosas on-chain. Pero cuando un agente te paga… ¿a quién
+  demandás si te estafa? Hoy: a nadie.<br><br>
+  Cuando un agente paga, tres preguntas no tienen respuesta: quién está atrás,
+  qué autorizó su dueño, y qué pagó. Para un merchant eso es fraude sin
+  contraparte — y sin recibo para disputar.<br><br>
+  Los rieles ya existen — MCPay y Latinum ganaron Colosseum construyendo la
+  tubería x402. ERC-8004 deployó identidad seudónima de agente sin capa humana.
+  Lo que falta es la cerradura: quién puede pasar por esos rieles.<br><br>
+  dnia suma tres primitivas en un solo programa Solana: una attestation SAS real
+  — un humano verificado detrás de la wallet, cero PII on-chain —, un mandato
+  firmado por el dueño con límites y whitelist, y un recibo emitido en la misma
+  transacción. Una instrucción exige las tres atómicamente: si un check falla,
+  la transacción entera revierte — la plata nunca se mueve.<br><br>
+  Adoptarlo son diez líneas, no un onboarding: sin cuenta, sin API key, sin
+  permiso. La chain es la API.<br><br>
+  Y está todo corriendo en devnet — mirá. Un click corre el guion completo:
+  attestation, mandato, un pago exitoso — y tres rechazos que quedan como
+  transacciones fallidas reales. Esta dice PayeeNotWhitelisted, en el explorer,
+  para siempre. El dashboard no es un mock — está leyendo la chain.<br><br>
+  Y no es vigilancia: la chain solo muestra "hay un humano verificado nivel N".
+  La identidad queda off-chain en el issuer — se revela solo por proceso legal.
+  Accountability judicial, no registro público de nombres.<br><br>
+  Skyfire hace KYA cerrado — JWTs off-chain que mueren con la empresa. ERC-8004
+  es seudónimo. ~25 proyectos Colosseum intentaron ideas adyacentes — cero
+  ganó; ninguno hizo la verificación de humano exigible dentro del pago
+  mismo.<br><br>
+  Cada firma que viste es una transacción real en devnet — abrí el explorer y
+  verificala vos. dnia: la capa de accountability para pagos de agentes. Open
+  source, en Solana.</p>
+  <p class="meta">~430 palabras ≈ 2:50 a ritmo natural.</p>
+</div>
+
+<h2>5 · Assets a capturar (checklist de producción)</h2>
+<ul class="check">
+  <li>Screen-recording: click en ▶ Correr demo + terminal + veredicto + signatures (Escena 6)</li>
+  <li>Screen-recording: explorer abierto en una tx fallida con <code>Error Code</code> visible</li>
+  <li>Screen-recording: dashboard /dashboard con ledger actualizándose</li>
+  <li>Screen-recording: scroll de /docs hasta el snippet createGate</li>
+  <li>Slides del deck como placas: 3 (hueco), 5 (stack), 8 (tx atómica), 14 (privacidad), 16 (competencia) — exportables del presentacion.html o recreables en el video</li>
+  <li>Locución: grabar EN (primario) — ~450 palabras; ES como backup</li>
+  <li>Música: ambient tech minimal, -20dB bajo la voz, sin letra</li>
+  <li>Fuente de on-screen text: misma del sitio (system-ui / mono para código)</li>
+</ul>
+
+<h2>6 · Reglas de edición</h2>
+<table>
+  <tr><th>Regla</th><th>Por qué</th></tr>
+  <tr><td>Demo antes de 2:00 (acá entra en 1:25)</td><td>El jurado se va si la demo llega tarde</td></tr>
+  <tr><td>Todo claim muestra evidencia on-chain, no slides</td><td>"verificalo vos" es el diferencial vs pitches de humo</td></tr>
+  <tr><td>Acelerar las esperas del runner (x2–x4), nunca cortar el resultado</td><td>Que se vea que es real pero sin dead time</td></tr>
+  <tr><td>Los ❌ se muestran — no esconder los reverts</td><td>Las txs fallidas son la prueba del enforcement</td></tr>
+  <tr><td>Sin stock footage, sin mockups de teléfono</td><td>Es infra: pantalla real &gt; b-roll</td></tr>
+  <tr><td>Subtítulos quemados en EN si la locución es EN; opcional</td><td>Muchos ven en mute en el portal</td></tr>
+</table>
+
+<h2>7 · Lo que el video NO dice (honestidad)</h2>
+<ul>
+  <li>Issuer KYC = mock → en el video se dice "mock issuer — the layer is proven, KYC is an integration" solo si preguntan; no esconderlo tampoco</li>
+  <li>Gate opt-in por servicio — no vendemos enforcement protocol-wide</li>
+  <li>Demanda de facilitators aún no validada — no decir "los facilitators quieren esto"</li>
+</ul>
+
+<h2>8 · Referencias</h2>
+<p class="meta">Deck fuente: <code>demo/presentacion.html</code> (19 slides) ·
+Diferenciación: <code>docs/12_DIFERENCIACION.md</code> · Evidencia:
+<code>docs/09_DEMO_SUBMISSION.md</code> · Runbook demo: <code>demo/README.md</code></p>
+
+</div>
+</body>
+</html>
