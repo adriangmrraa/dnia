@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dnia — pitch</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: #0d1117; color: #e6edf3;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden; height: 100vh;
+  }
+  .slide {
+    display: none; height: 100vh; padding: 6vh 8vw 10vh;
+    flex-direction: column; justify-content: center;
+  }
+  .slide.on { display: flex; }
+  .kicker {
+    color: #58a6ff; font-size: clamp(.8rem,1.4vw,1rem); font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.2rem;
+  }
+  h1 { font-size: clamp(2.4rem, 5.5vw, 4.5rem); line-height: 1.08; font-weight: 800; }
+  h2 { font-size: clamp(1.7rem, 3.6vw, 3rem); line-height: 1.15; font-weight: 750; margin-bottom: 1.6rem; }
+  .big { font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1.35; font-weight: 650; max-width: 22em; }
+  .sub { color: #8b949e; font-size: clamp(1rem, 1.8vw, 1.35rem); margin-top: 1.2rem; max-width: 44em; line-height: 1.5; }
+  .grid { display: grid; gap: 1rem; margin-top: 1.6rem; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    padding: 1.3rem 1.4rem;
+  }
+  .card h3 { font-size: clamp(1rem, 1.6vw, 1.3rem); margin-bottom: .15rem; }
+  .card .q { color: #58a6ff; font-size: .9rem; margin-bottom: .6rem; }
+  .card p { color: #c9d1d9; font-size: clamp(.9rem, 1.4vw, 1.05rem); line-height: 1.5; }
+  code, .mono {
+    font-family: ui-monospace, "Cascadia Mono", Menlo, monospace;
+    background: #21262d; border-radius: 5px; padding: .08em .4em;
+    font-size: .88em; color: #a5d6ff;
+  }
+  pre {
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    padding: 1.4rem 1.6rem; font-family: ui-monospace, Menlo, monospace;
+    font-size: clamp(.8rem, 1.35vw, 1.05rem); line-height: 1.65; color: #c9d1d9;
+    overflow: auto; margin-top: 1.4rem;
+  }
+  .ok { color: #3fb950; } .bad { color: #f85149; } .warn { color: #d29922; } .acc { color: #58a6ff; }
+  .mut { color: #8b949e; }
+  .flow { display: flex; flex-direction: column; gap: .7rem; margin-top: 1.6rem; }
+  .step {
+    background: #161b22; border: 1px solid #30363d; border-left: 4px solid #58a6ff;
+    border-radius: 8px; padding: .9rem 1.2rem;
+    font-size: clamp(.95rem, 1.55vw, 1.2rem); color: #c9d1d9;
+  }
+  .step b { color: #e6edf3; }
+  .step .rv { border-left-color: #f85149; }
+  table { border-collapse: collapse; margin-top: 1.4rem; width: 100%; }
+  th { text-align: left; color: #8b949e; font-weight: 500; font-size: .95rem;
+       border-bottom: 1px solid #30363d; padding: .5rem .7rem; }
+  td { padding: .55rem .7rem; border-bottom: 1px solid #21262d;
+       font-size: clamp(.85rem, 1.4vw, 1.05rem); color: #c9d1d9; }
+  .quote {
+    border-left: 4px solid #3fb950; padding: .4rem 0 .4rem 1.4rem;
+    font-size: clamp(1.3rem, 2.6vw, 2rem); line-height: 1.4; font-weight: 600;
+    max-width: 26em;
+  }
+  .nav {
+    position: fixed; bottom: 1.4rem; right: 2rem; color: #8b949e;
+    font-size: .85rem; display: flex; gap: 1rem; align-items: center;
+  }
+  .nav .keys { font-family: ui-monospace, monospace; }
+  .pageno { position: fixed; bottom: 1.4rem; left: 2rem; color: #8b949e; font-size: .85rem; }
+  .notes {
+    position: fixed; bottom: 3.4rem; left: 2rem; right: 2rem;
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: .8rem 1rem; color: #8b949e; font-size: .9rem; line-height: 1.45;
+    display: none; max-height: 18vh; overflow: auto;
+  }
+  .notes.show { display: block; }
+  .link { color: #58a6ff; }
+  .hero-badges { display: flex; gap: .6rem; margin-top: 1.6rem; flex-wrap: wrap; }
+  .badge {
+    background: #1f6feb33; color: #58a6ff; border-radius: 99px;
+    padding: .25rem .9rem; font-size: .9rem;
+  }
+  .badge.g { background: #23863633; color: #3fb950; }
+  .badge.r { background: #f8514933; color: #f85149; }
+</style>
+</head>
+<body>
+
+<!-- 1 · HOOK -->
+<section class="slide on">
+  <div class="kicker">Road to Colosseum · Solana devnet · live</div>
+  <h1>Los agentes ya mueven plata.<br>Nadie responde por ellos.</h1>
+  <p class="sub"><b>dnia</b> — la capa de accountability para pagos de agentes IA:
+  identidad verificada + mandato + recibo, exigidos <b>dentro</b> de la
+  transacción que mueve la plata.</p>
+  <div class="hero-badges">
+    <span class="badge g">programa live en devnet</span>
+    <span class="badge">21/21 tests</span>
+    <span class="badge">reverts reales en explorer</span>
+  </div>
+  <div class="notes">Hook: un agente pide tu API, paga en USDC, y te estafa. ¿A quién demandás? Hoy: nadie. Eso es lo que resolvemos.</div>
+</section>
+
+<!-- 2 · PROBLEMA -->
+<section class="slide">
+  <div class="kicker">El problema</div>
+  <h2>Cuando un agente paga, nadie puede responder 3 preguntas</h2>
+  <div class="grid g3">
+    <div class="card"><h3>¿Quién está atrás?</h3><p class="q">identidad</p><p>Nada en una request distingue agente de humano ni dice quién lo opera. (IETF draft AIP lo formaliza.)</p></div>
+    <div class="card"><h3>¿Qué autorizó?</h3><p class="q">mandato</p><p>El agente usa la wallet del dueño sin frontera de permisos. No hay límite, ni lista, ni revocación exigible.</p></div>
+    <div class="card"><h3>¿Qué pasó?</h3><p class="q">recibo</p><p>Una tx mueve fondos pero no dice bajo qué mandato ni para qué servicio. Sin evidencia, no hay disputa posible.</p></div>
+  </div>
+  <div class="notes">Para un merchant/facilitator esto es fraude sin contraparte, chargebacks sin defensa, liability sin ancla. No es futurista: x402 ya mueve plata.</div>
+</section>
+
+<!-- 3 · POR QUÉ AHORA -->
+<section class="slide">
+  <div class="kicker">Por qué ahora</div>
+  <h2>Los rieles ganaron. Falta la cerradura.</h2>
+  <div class="flow">
+    <div class="step"><b>MCPay</b> (1ro Stablecoins) y <b>Latinum</b> (1ro AI) ya ganaron Colosseum construyendo los rails de pago x402 agente→servicio.</div>
+    <div class="step"><b>ERC-8004 "Trustless Agents"</b> deployó mainnet 29/01/2026 — identidad de agente <b>seudónima</b>: su spec omite el binding a humano.</div>
+    <div class="step"><b>Skyfire</b> hace KYA cerrado: JWTs en su servidor privado, suscripción, no consumible por programas, muere con la empresa.</div>
+  </div>
+  <p class="sub">La tubería existe y está premiada. Quién puede pasar por ella — bajo qué autorización — nadie lo resolvió on-chain.</p>
+  <div class="notes">Timing literal: la ventana se abrió esta semana con 8004. Los ganadores anteriores hicieron el rail; nosotros hacemos el gate.</div>
+</section>
+
+<!-- 4 · SOLUCIÓN -->
+<section class="slide">
+  <div class="kicker">La solución</div>
+  <h2>Tres primitivas, un programa</h2>
+  <div class="grid g3">
+    <div class="card"><h3>① Identidad</h3><p class="q">¿quién está atrás?</p><p>Attestation <b>SAS</b> real: un issuer verificó que hay un humano detrás de la wallet. Divulgación selectiva — nivel + timestamp. <b>Cero PII on-chain.</b></p></div>
+    <div class="card"><h3>② Mandato</h3><p class="q">¿qué autorizó?</p><p>PDA firmado por el owner: máx por tx, cap diario, whitelist de payees, expiración, revocable. Los contadores los muta solo el programa.</p></div>
+    <div class="card"><h3>③ Recibo</h3><p class="q">¿qué pasó?</p><p><code>PaymentReceipt</code> emitido en la misma tx: pagador, payee, monto, mint, invoice, mandato, timestamp. Auditable para siempre.</p></div>
+  </div>
+  <div class="notes">No es un token, no es un registry, no es middleware. Es una primitiva de pago: autorización + identidad + evidencia en un solo programa.</div>
+</section>
+
+<!-- 5 · EL GATE -->
+<section class="slide">
+  <div class="kicker">Cómo funciona</div>
+  <h2>El gate es atómico — o pasa todo, o nada</h2>
+  <pre>pay(agente, monto, servicio):
+  1. leer attestation SAS del agente   <span class="bad">→ falta/vencida = REVERT</span>
+  2. leer mandato (límite, whitelist,  <span class="bad">→ violado = REVERT</span>
+     expiry, mint = USDC esperado)
+  3. transfer USDC agente → servicio
+  4. emitir PaymentReceipt</pre>
+  <p class="sub">Un JWT puede salteárselo un middleware. Un programa Solana
+  <b>revierte la transacción misma</b> — <b>la plata nunca se mueve</b> si los
+  checks fallan. No hay nada que devolver ni disputar.</p>
+  <div class="notes">La frase técnica: enforcement estructural, no opcional. La autorización no es un documento que el merchant mira — es una regla que el programa ejecuta.</div>
+</section>
+
+<!-- 6 · EVIDENCIA -->
+<section class="slide">
+  <div class="kicker">Evidencia — no slides, la chain</div>
+  <h2>6 beats, todos con signature real en devnet</h2>
+  <table>
+    <tr><th>Beat</th><th>Resultado on-chain</th></tr>
+    <tr><td>1 · Attest agente A (SAS real)</td><td class="ok">✅ attestation PDA creada</td></tr>
+    <tr><td>2 · Owner firma mandato ($5/tx, $10/día, solo X)</td><td class="ok">✅ mandate PDA</td></tr>
+    <tr><td>3 · Pago $0.50 → servicio X</td><td class="ok">✅ transfer + receipt → HTTP 200</td></tr>
+    <tr><td>4 · Agente B sin attestation</td><td class="bad">❌ tx fallida · AttestationMissing</td></tr>
+    <tr><td>5 · $10 over-limit · payee no whitelisted</td><td class="bad">❌ OverPerTxLimit · PayeeNotWhitelisted</td></tr>
+    <tr><td>6 · Owner revoca → siguiente pay</td><td class="bad">❌ MandateRevoked</td></tr>
+  </table>
+  <p class="sub">Los rechazos aterrizan como transacciones fallidas reales —
+  clickeables en el explorer con su <code>Error Code</code>. Y el demo entero
+  corre con <b>un botón</b> en <span class="link">/demo</span>.</p>
+  <div class="notes">Acá mostrar el explorer en vivo: abrir una tx fallida y señalar el Error Code. Cualquier jurado puede verificarlo.</div>
+</section>
+
+<!-- 7 · DEMO -->
+<section class="slide">
+  <div class="kicker">Demo en vivo</div>
+  <h2>Un click → 6 beats → explorer</h2>
+  <div class="big">El sitio (<span class="mono">localhost:3404</span>) corre la demo
+  completa contra devnet desde el botón <b>▶ Correr demo</b>: terminal en vivo,
+  signatures linkeadas, dashboard auditando en tiempo real.</div>
+  <p class="sub">Dashboard: ledger de pagos aceptados/rechazados en criollo, estado
+  del mandato y attestations — todo leído de la chain, nada mockeado.</p>
+  <div class="notes">Si hay tiempo acá: abrir /demo, correr, mostrar el ledger actualizándose. Si no, la evidencia estática ya está on-chain.</div>
+</section>
+
+<!-- 8 · ADOPCIÓN -->
+<section class="slide">
+  <div class="kicker">Adopción — cero fricción</div>
+  <h2>Sin cuenta. Sin API key. Sin permiso.</h2>
+  <pre>const gate = createGate({ programId, payee: MI_WALLET, price: 0.5, mint: USDC });
+
+app.get("/api/premium", async (req, res) =&gt; {
+  const check = await gate.verify(req.headers["x-payment"]);
+  if (!check.ok) return res.status(402).json(gate.requirements());
+  res.json({ resource: "…", receipt: check.receipt });
+});</pre>
+  <p class="sub">El programa, el schema SAS y el mint ya están desplegados y
+  públicos — <b>la chain es la API</b>. El 402 es x402-shaped: encaja en el
+  flujo de MCPay/PayAI. <span class="mono">demo_adoption.sh</span> suma un
+  servicio nuevo en vivo.</p>
+  <div class="notes">Contrastar con Skyfire: suscripción + API key + su verificador. Acá un dev copia un snippet y está adoptando el protocolo.</div>
+</section>
+
+<!-- 9 · PRIVACIDAD -->
+<section class="slide">
+  <div class="kicker">Privacidad</div>
+  <h2>Accountability judicial — no vigilancia</h2>
+  <div class="grid g2">
+    <div class="card"><h3 class="ok">On-chain se ve</h3><p>"hay un humano verificado nivel N detrás de este agente, emitido por issuer X" — nivel, timestamp, estado de revocación. <b>Nada más.</b></p></div>
+    <div class="card"><h3 class="bad">On-chain NO está</h3><p>quién es el humano. La identidad real la guarda el issuer off-chain; revelarla exige <b>proceso legal hacia el issuer</b>. No hay DNI público ni trazabilidad masiva.</p></div>
+  </div>
+  <p class="sub">Skyfire: issuer y verificador en el mismo servidor privado —
+  una empresa lo ve todo. Acá la credencial vive en la chain, la verifica
+  cualquiera, y el PII queda distribuido.</p>
+  <div class="notes">Este es el resguardo: accountability sin entregar un mapa de vigilancia. Diseño deliberado, no descuido.</div>
+</section>
+
+<!-- 10 · NO ES REGULATORIO -->
+<section class="slide">
+  <div class="kicker">Posición</div>
+  <h2>El ecosistema se resguarda solo</h2>
+  <div class="quote">Un merchant exige humano verificado porque no quiere ser
+  estafado — no porque una ley se lo mande.</div>
+  <p class="sub">Filipinas, Brasil y EE.UU. ya redactan esto: evidencia de que el
+  problema es real, no la razón de existir. Si la ley nunca llega, funciona
+  igual. Si llega — mejor una capa open-source corriendo que un registro
+  estatal cerrado.</p>
+  <div class="notes">Defensa si el jurado pregunta por regulación: somos opt-in y de mercado. La regulación valida el problema, no sostiene el producto.</div>
+</section>
+
+<!-- 11 · COMPETENCIA -->
+<section class="slide">
+  <div class="kicker">Competencia</div>
+  <h2>~25 lo intentaron en Colosseum. Cero ganó. Ninguno hizo esto.</h2>
+  <table>
+    <tr><th></th><th>Skyfire KYA</th><th>ERC-8004</th><th>dnia</th></tr>
+    <tr><td>Humano verificado</td><td class="ok">sí</td><td class="bad">no</td><td class="ok">sí</td></tr>
+    <tr><td>Verificable sin cuenta</td><td class="bad">no</td><td class="ok">sí</td><td class="ok">sí</td></tr>
+    <tr><td><b>Exigible dentro del programa</b></td><td class="bad">no</td><td class="bad">no</td><td class="ok">sí</td></tr>
+    <tr><td>Sobrevive al emisor</td><td class="bad">no</td><td class="ok">sí</td><td class="ok">sí</td></tr>
+  </table>
+  <p class="sub">Complementamos a 8004 (somos su human layer faltante) y a los
+  facilitators x402 (somos un hook, no un rewrite).</p>
+  <div class="notes">El vacío verificado: nadie hizo credencial de humano-verificado exigible económicamente — verificable por terceros dentro de programas.</div>
+</section>
+
+<!-- 12 · MODELO -->
+<section class="slide">
+  <div class="kicker">Modelo — honesto</div>
+  <h2>Protocolo abierto hoy; negocio en las orillas</h2>
+  <div class="flow">
+    <div class="step"><b>La capa es pública y sin fee</b> — la adopción vale más que el rent seeking en un estándar naciente.</div>
+    <div class="step"><b>Ingreso donde ya existe:</b> verificación KYC por issuers (Persona/Veriff-class cobra por check) + integraciones premium de facilitators.</div>
+    <div class="step"><b>Destino probable:</b> estándar absorbido por los rails — MCPay/Latinum ya premian la tubería; la cerradura es la pieza que falta.</div>
+  </div>
+  <div class="notes">No fingir tokenomics. La honestidad es el pitch: infra pura monetiza tarde — lo declaramos y mostramos dónde está el valor.</div>
+</section>
+
+<!-- 13 · ESTADO -->
+<section class="slide">
+  <div class="kicker">Estado real</div>
+  <h2>Hecho, no prometido</h2>
+  <div class="grid g2">
+    <div class="card"><h3>✅ Deployado y corriendo</h3><p>Programa <code>D8pcKtez…</code> + credential + schema + mint USDC-test en devnet. 21/21 tests. Demo reproducible de un click.</p></div>
+    <div class="card"><h3>⚠️ Declarado como mock/pendiente</h3><p>Issuer KYC = mock (la capa se demuestra, no el KYC). Gate opt-in por servicio. Recibo = evento. Roadmap: issuer real, receipt PDA, bridge 8004.</p></div>
+  </div>
+  <div class="notes">La honestidad como señal: un jurado que encuentra un mock no declarado mata el pitch; uno declarado suma credibilidad.</div>
+</section>
+
+<!-- 14 · CIERRE -->
+<section class="slide">
+  <div class="kicker">dnia</div>
+  <div class="quote">Los rails de pagos para agentes ya ganaron premios.
+  Nadie construyó quién puede pasar por ellos.<br><br>
+  <b>Nosotros construimos la cerradura.</b></div>
+  <p class="sub">
+    <span class="mono">github.com/adriangmrraa/dnia</span> · Apache-2.0 ·
+    corré la demo en <span class="mono">localhost:3404/demo</span> o
+    verificá las signatures en el explorer.
+  </p>
+  <div class="notes">CTA: no "gracias" — "abrí el explorer y verificalo vos". Eso es lo memorable: los reverts son reales.</div>
+</section>
+
+<div class="pageno" id="pn">1 / 14</div>
+<div class="nav"><span class="keys">← → navegar · N notas · F fullscreen</span></div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const notes = [...document.querySelectorAll('.notes')];
+  const pn = document.getElementById('pn');
+  let i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    pn.textContent = (i + 1) + ' / ' + slides.length;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') show(i + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+    if (e.key === 'n' || e.key === 'N')
+      notes.forEach(n => n.classList.toggle('show'));
+    if (e.key === 'f' || e.key === 'F')
+      document.fullscreenElement
+        ? document.exitFullscreen()
+        : document.documentElement.requestFullscreen();
+  });
+  document.addEventListener('click', e => {
+    if (e.clientX > innerWidth / 2) show(i + 1); else show(i - 1);
+  });
+  show(0);
+</script>
+</body>
+</html>
