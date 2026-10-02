@@ -2,6 +2,7 @@ import { Surfnet } from "@solana/surfpool";
 import * as anchor from "@anchor-lang/core";
 import { Program, Wallet } from "@anchor-lang/core";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import * as fs from "fs";
 import * as path from "path";
 import idlJson from "../../target/idl/agentic_gate.json";
 import { AgenticGate } from "../../target/types/agentic_gate";
@@ -19,6 +20,14 @@ import { AgenticGate } from "../../target/types/agentic_gate";
  */
 
 const DEPLOY_DIR = path.resolve(__dirname, "..", "..", "target", "deploy");
+const SAS_SO = path.resolve(
+  __dirname,
+  "..",
+  "fixtures",
+  "sas.so"
+);
+export const SAS_PROGRAM_ID =
+  "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
 
 export interface GateHarness {
   surfnet: Surfnet;
@@ -50,6 +59,11 @@ export async function bootGate(): Promise<GateHarness> {
     programId: program.programId.toBase58(),
     soPath: path.join(DEPLOY_DIR, "agentic_gate.so"),
   });
+
+  // SAS real (dump de devnet) — equivalente al [[test.genesis]] del plan.
+  if (fs.existsSync(SAS_SO)) {
+    surfnet.deploy({ programId: SAS_PROGRAM_ID, soPath: SAS_SO });
+  }
 
   return { surfnet, connection, provider, program, payer };
 }

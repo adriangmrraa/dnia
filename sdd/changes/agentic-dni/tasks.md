@@ -37,22 +37,24 @@ Workspace Anchor compilable + cadena build/test en WSL probada de punta a punta 
 
 SAS real dentro del validator local = tests deterministas offline. Idempotente.
 
-- [ ] `scripts/dump_sas.sh` (WSL, idempotente): `solana program dump 22zoJM… -u devnet -o tests/fixtures/sas.so` (skip si existe salvo `--force`); fixture commiteado para determinismo.
-- [ ] `Anchor.toml`: `[[test.genesis]]` con `address = "22zoJM…"` + `program = "tests/fixtures/sas.so"` (equivale a `--bpf-program`; fallback documentado: validator manual + `anchor test --skip-local-validator`).
-- [ ] `tests/helpers/sas.ts`: bootstrap del issuer en validator (create credential + schema `agentic-dni-human-verified` v1) + helpers `attest(wallet, level, expiry)` / `revoke(wallet)` vía `sas-lib` contra `localhost:8899`.
-- [ ] `tests/helpers/token.ts` + `keys.ts`: mint USDC-test (6 dec) + ATAs + `mintTo` para A/B/X/Y; keypairs de roles.
-- [ ] Smoke en `tests/agentic-gate.ts`: credential→schema→attestation creados en validator y `fetchAttestation` la lee.
+- [x] `scripts/dump_sas.sh` (WSL, idempotente): `solana program dump 22zoJM… -u devnet -o tests/fixtures/sas.so` (skip si existe salvo `--force`); fixture commiteado para determinismo. **Hecho:** dump real 135.680 bytes commiteado.
+- [x] ~~`Anchor.toml`: `[[test.genesis]]`~~ → **adaptado a surfpool embebido** (ver DECISIONS.md): el harness `tests/helpers/surfnet.ts` hace `surfnet.deploy({programId: SAS, soPath: "tests/fixtures/sas.so"})` — mismo efecto que `[[test.genesis]]` (SAS real cargado en el runtime de test). `solana-test-validator` no arranca en este entorno (WSL1 SO_REUSEPORT / Windows Os 1314).
+- [x] `tests/helpers/sas.ts`: bootstrap del issuer (credential `AGENTIC-DNI-MOCK-ISSUER` + schema `agentic-dni-human-verified` v1, fields `["level","issued_at"]` layout `[u8,i64]`) + helpers `attest(wallet, level, expiry)` / `revokeAttestation(wallet)` vía `sas-lib@1.0.10` (ixs kit traducidas a web3 y enviadas por el RPC del surfnet).
+- [x] `tests/helpers/token.ts` (mint USDC-test 6 dec + ATAs + `mintTo`/`tokenBalance` para A/B/X/Y) + `fundedKeypair` (roles) en el mismo archivo.
+- [x] Smoke en `tests/agentic-gate.ts`: credential→schema→attestation creados en el surfnet y `fetchAttestation` la lee (PDA re-derivada, `level` decodificado); `CloseAttestation` deja la cuenta inexistente.
 - **Aceptación:** `anchor test` levanta validator con SAS cargado y el smoke pasa; mint+ATA funcionan.
+- **Evidencia (02/10/2026, WSL):** `npx ts-mocha` → **7/7 passing** (S1 3 + S2 4): credential/schema con owner=SAS, attest→`fetchMaybeAttestation` lee `{level:2}` correcto en el PDA re-derivado, revoke→cuenta inexistente, mint+ATA+mintTo. Además discriminadores de cuenta SAS verificados empíricamente contra el binario real: **Credential=0, Schema=1, Attestation=2** (corrije lectura previa del codegen — registrado en DECISIONS.md).
 - **Cubre:** mitigación D4, base R-07, enabler de todos los tests `pay`. Fallback si el dump falla: mock de cuenta con mismo layout (registrar en `docs/DECISIONS.md`).
 
 ## S3 — `init_mandate` + `pay` completo (happy path + huérfano)
 
 El corazón del gate: los 14 pasos del diseño en una ix atómica.
 
-- [ ] `lib.rs`: cuenta `Mandate` (PDA `["mandate", owner, agent]`, reservar 512 B) + `init_mandate(agent, max_per_tx, daily_cap, payees[≤8], expiry)` + `GateError` completo.
-- [ ] `lib.rs`: `pay(amount, service_ref[16])` — checks identidad (owner==SAS, re-derivación PDA, deserializa, expiry, `level>=min_level`) → autorización (`agent==signer`, `!revoked`, expiry, whitelist, `max_per_tx`, cap día UTC por `day_index`) → contadores → CPI `token::transfer` (firma agente) → `emit!(PaymentReceipt{payer,payee,amount,service_ref,mandate,timestamp})`.
-- [ ] Tests: CA-2 (policy exacta + contadores 0), CA-3 (tx confirma; X recibe 0.50 exacto; evento parseado con los 6 campos; `spent_today` += 0.50), CA-4 (B sin attestation → `AttestationMissing`, balance X sin cambio, sin evento).
+- [x] `lib.rs`: cuenta `Mandate` (PDA `["mandate", owner, agent]`, reservar 512 B) + `init_mandate(agent, max_per_tx, daily_cap, payees[≤8], expiry)` + `GateError` completo.
+- [x] `lib.rs`: `pay(amount, service_ref[16])` — checks identidad (owner==SAS, re-derivación PDA, deserializa, expiry, `level>=min_level`) → autorización (`agent==signer`, `!revoked`, expiry, whitelist, `max_per_tx`, cap día UTC por `day_index`) → contadores → CPI `token::transfer` (firma agente) → `emit!(PaymentReceipt{payer,payee,amount,service_ref,mandate,timestamp})`.
+- [x] Tests: CA-2 (policy exacta + contadores 0), CA-3 (tx confirma; X recibe 0.50 exacto; evento parseado con los 6 campos; `spent_today` += 0.50), CA-4 (B sin attestation → `AttestationMissing`, balance X sin cambio, sin evento).
 - **Aceptación:** `anchor test` verde para CA-2/CA-3/CA-4.
+- **Evidencia (02/10/2026, WSL):** `anchor build` OK (fix aplicado: `CpiContext::new` de anchor 1.2 toma `Pubkey`, no `AccountInfo`); `npx ts-mocha` → **10/10 passing**. CA-3 verifica transfer exacta (±500_000 en ATAs de A/X), `spent_today`/`total_spent`/`day_index` actualizados y `PaymentReceipt` parseado desde logs `Program data:` con los 6 campos. CA-4 (B con mandato pero sin attestation) → `AttestationMissing`, balance X inmutable, contadores en 0 (INV-2). Nota de diseño aplicada: seeds de `mandate` usan campos almacenados para que CA-11 produzca `MandateBoundToOtherAgent`; constraints `agent_ata.owner==agent` y `service_ata.owner==service` amarran los ATAs al firmante/payee.
 - **Cubre:** R-01..R-05, INV-2, beats 2–4 (parte on-chain).
 
 ## S4 — Revocación + matriz de reverts (CA-5..CA-12)
