@@ -85,8 +85,9 @@ El corazón del gate: los 14 pasos del diseño en una ix atómica.
 
 ## S7 — Dashboard read-only (3 paneles)
 
-- [ ] `dashboard/` (Vite+React, sin wallet, read-only): ledger por `getSignaturesForAddress(mandatePda)` + `getTransaction` + parse `Program data:` con IDL (cada línea linkea al explorer); panel mandato (policy, spent/cap, expiry, revoked); panel attestation (`fetchAttestation`: vigente/expirada/inexistente — historial de la PDA distingue revocada de nunca-emitida).
+- [x] `dashboard/` (Vite+React, sin wallet, read-only): ledger por `getSignaturesForAddress(mandatePda)` + `getTransaction` + parse `Program data:` con IDL (cada línea linkea al explorer); panel mandato (policy, spent/cap, expiry, revoked); panel attestation (layout SAS verificado byte-a-byte: vigente/expirada/inexistente — historial de la PDA distingue revocada de nunca-emitida).
 - **Aceptación:** `pnpm dev` muestra el pago de S6 como línea verificable + estados de mandato/attestation correctos; cero PII (INV-1); el dashboard no firma ni escribe.
+- **Evidencia (02/10/2026, devnet real):** `tsc --noEmit` OK + `vite build` OK (553 kB, 163 kB gzip). `vite dev :3404` sirve y las `VITE_*` se inyectan desde `dashboard/.env` (generado por `scripts/sync_dashboard_env.sh` desde `demo/.env` — solo pubkeys). `scripts/check_dashboard_data.ts` ejerce la MISMA `dashboard/src/gate.ts` que la UI: mandato A `vigente` ($5/tx, cap $10, spent_today $1.00 — 2 pagos × $0.50, whitelist = solo X), attestation A `vigente` (level 2, historial = revoke+re-attest de S6), ledger con `pago 47XXNtadLoRbjoMqjsLEkFtDRiVPZedMdwEdq8LFUT3UCTzQzvT7JYMeYHUpeMdntuw11GeUR4CjeNyJZLgxQyE7` (el pago S6, ref `0c18926a…`) + otro pago $0.50 + ix `init_mandate`. Read-only por construcción: solo `getAccountInfo`/`getSignaturesForAddress`/`getTransaction`, sin Keypair/wallet-adapter; IDL leído de `target/idl/` vía `fs.allow` del vite config. **Fix:** decoder de cuentas del IDL conserva snake_case (`max_per_tx`, `payee_whitelist`…), mismo patrón del bug `service_ref` de S6.
 - **Cubre:** R-08, CA-6 (parte dashboard), legibilidad del jurado.
 
 ## S8 — Orquestación de la demo de 6 beats + docs

@@ -1,0 +1,39 @@
+/* agentic-dni dashboard — tema oscuro minimal, legible para demo en vivo */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+.wrap { max-width: 960px; margin: 0 auto; padding: 1.2rem; }
+h1 { font-size: 1.3rem; margin: 0; }
+h2 { font-size: 0.95rem; margin: 0 0 0.5rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem; }
+.meta { display: flex; gap: 0.7rem; align-items: center; font-size: 0.85rem; color: #8b949e; }
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: ui-monospace, monospace; font-size: 0.85em; }
+button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px; padding: 0.3rem 0.7rem; cursor: pointer; }
+button:hover { border-color: #58a6ff; }
+.chip { background: #1f6feb33; color: #58a6ff; border-radius: 99px; padding: 0.1rem 0.6rem; font-size: 0.75rem; }
+.agents { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+.agents .sel { border-color: #3fb950; background: #23863622; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 0.9rem 1rem; }
+.card.wide { margin-top: 0.8rem; }
+dl { display: grid; grid-template-columns: 7rem 1fr; gap: 0.25rem 0.6rem; margin: 0.5rem 0 0; font-size: 0.85rem; }
+dt { color: #8b949e; }
+dd { margin: 0; }
+.badge { display: inline-block; border-radius: 99px; padding: 0.12rem 0.7rem; font-weight: 600; font-size: 0.8rem; margin: 0.1rem 0 0.3rem; }
+.badge.ok { background: #23863633; color: #3fb950; }
+.badge.bad { background: #f8514933; color: #f85149; }
+.badge.warn { background: #d2992233; color: #d29922; }
+.badge.muted { background: #30363d66; color: #8b949e; }
+.note { font-size: 0.75rem; color: #8b949e; margin: 0.6rem 0 0; }
+.muted { color: #8b949e; }
+.bad { color: #f85149; }
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+th { text-align: left; color: #8b949e; font-weight: 500; border-bottom: 1px solid #30363d; padding: 0.3rem 0.4rem; }
+td { padding: 0.3rem 0.4rem; border-bottom: 1px solid #21262d; }
+tr.fail td { color: #8b949e; }
