@@ -52,6 +52,46 @@ const PRIMITIVES = [
   },
 ];
 
+const ACTORS = [
+  {
+    who: "Humano / dueño",
+    tag: "una vez y listo",
+    body: (
+      <>
+        Se verifica <b>una sola vez</b> con un issuer (KYC off-chain) y firma
+        un mandato on-chain:{" "}
+        <i>
+          "mi agente gasta máx $5/tx, $20/mes, solo a estos servicios"
+        </i>
+        . Después no toca nada — salvo revocar.
+      </>
+    ),
+  },
+  {
+    who: "Agente",
+    tag: "en cada pago",
+    body: (
+      <>
+        Paga en los servicios gateados. No presenta nada: el programa chequea
+        attestation + mandato en la misma tx. Si algo no cierra,{" "}
+        <b>la plata nunca se mueve</b> — la tx revierte antes del transfer.
+      </>
+    ),
+  },
+  {
+    who: "Servicio / merchant",
+    tag: "~10 líneas",
+    body: (
+      <>
+        Copia{" "}
+        <code>{"createGate({programId, payee, price, mint})"}</code> + ~10
+        líneas de handler. Sin cuenta, sin API key, sin permiso —{" "}
+        <b>la chain es la API</b>.
+      </>
+    ),
+  },
+];
+
 const FLOW = [
   {
     step: "1 · attestation",
@@ -86,11 +126,22 @@ const WHY_NOW = [
   },
   {
     k: "La regulación lo confirma",
-    v: "Filipinas HB 11014, Brasil PL 974/2026, US AI AGENT Act — prueba de que el problema es real. Pero el ecosistema no espera a la ley: el enforcement económico resuelve fraude y liability hoy, opt-in y sin permiso de nadie.",
+    v: "Filipinas HB 11014, Brasil PL 974/2026, US AI AGENT Act — evidencia de que el problema es real, no la razón de existir. No es un proyecto regulatorio: el ecosistema se resguarda solo, por incentivos de mercado — el merchant exige humano verificado porque no quiere ser estafado. Si la ley nunca llega funciona igual; si llega, mejor una capa open-source corriendo que un registro estatal cerrado.",
   },
   {
     k: "El vacío está verificado",
     v: "~25 proyectos Colosseum adyacentes, 0 winners en esta capa: nadie hizo human-verification exigible dentro del pago mismo.",
+  },
+];
+
+const PRIVACY = [
+  {
+    k: "On-chain se ve",
+    v: '"hay un humano verificado nivel N detrás de este agente, emitido por issuer X" — nivel, timestamp, estado de revocación. Nada más.',
+  },
+  {
+    k: "On-chain NO está",
+    v: "quién es el humano. La identidad real la guarda el issuer off-chain; revelarla exige proceso legal hacia el issuer. Accountability judicial — no trazabilidad masiva ni DNI público.",
   },
 ];
 
@@ -140,6 +191,20 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Cómo se usa ── */}
+      <section>
+        <h2 className="sect">Cómo se usa — tres actores, una vuelta</h2>
+        <div className="adopters trio">
+          {ACTORS.map((a) => (
+            <article className="card" key={a.who}>
+              <h3 className="prim">{a.who}</h3>
+              <p className="prim-q">{a.tag}</p>
+              <p className="plain">{a.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* ── Flujo atómico ── */}
       <section>
         <h2 className="sect">
@@ -158,8 +223,11 @@ export default function Landing() {
         </div>
         <p className="note">
           Cualquier check que falla revierte la transacción completa: ni el
-          pago ni el recibo existen. La autorización no es un documento que el
-          merchant mira — es una regla que el programa ejecuta.{" "}
+          pago ni el recibo existen. <b>La plata nunca se mueve</b> — el
+          revert ocurre antes del transfer, no hay nada que devolver ni que
+          disputar. Eso es lo que un programa on-chain hace y un middleware
+          no puede. La autorización no es un documento que el merchant mira —
+          es una regla que el programa ejecuta.{" "}
           <a href={explorerAddr(PROGRAM_ID)} target="_blank" rel="noreferrer">
             programa {short(PROGRAM_ID)} ↗
           </a>
@@ -269,6 +337,25 @@ export default function Landing() {
             </article>
           ))}
         </div>
+      </section>
+
+      {/* ── Privacidad ── */}
+      <section>
+        <h2 className="sect">Privacidad — accountability, no vigilancia</h2>
+        <div className="whygrid">
+          {PRIVACY.map((p) => (
+            <article className="card" key={p.k}>
+              <h3 className="why-k">{p.k}</h3>
+              <p className="plain">{p.v}</p>
+            </article>
+          ))}
+        </div>
+        <p className="note">
+          el contraste con Skyfire: issuer y verificador viven en su servidor
+          privado — una empresa ve todo y la credencial muere con ella. Acá
+          la credencial vive en la chain (la verifica cualquiera, sin
+          permiso) y el PII queda distribuido donde corresponde.
+        </p>
       </section>
 
       {/* ── Honestidad ── */}

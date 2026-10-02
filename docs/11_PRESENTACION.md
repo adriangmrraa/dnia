@@ -3,7 +3,7 @@
 > Documento de presentación. La evidencia operativa completa está en
 > `docs/09_DEMO_SUBMISSION.md`; el dossier de investigación en
 > `docs/CANDIDATE_O_agentic-dni.md`; el pitch narrativo en §10 de ese archivo.
-> Los campos Colosseum (§7) están en inglés porque la submission es en inglés.
+> Los campos Colosseum (§8) están en inglés porque la submission es en inglés.
 
 ## 1. Qué es — en una frase
 
@@ -20,7 +20,29 @@ Tres primitivas, una instrucción `pay` atómica:
 | Mandato | ¿Qué autorizó? | PDA firmado por el dueño: límite por tx, cap diario, payees whitelisted, expiración, revocable |
 | Recibo | ¿Qué pasó? | `PaymentReceipt` (7 campos) emitido por el programa en la misma tx |
 
-## 2. Por qué ahora (timing verificable)
+## 2. Cómo se usa — los tres actores
+
+- **Humano / dueño:** se verifica **una sola vez** con un issuer (KYC
+  off-chain) y firma un mandato on-chain: *"mi agente gasta máx $5/tx,
+  $20/mes, solo a estos servicios"*. Listo — de ahí en más solo revoca si
+  quiere.
+- **Agente:** paga en los servicios gateados. No presenta nada — el programa
+  chequea attestation + mandato en la misma transacción que mueve la plata.
+  Si algo no cierra, la tx entera revierte **antes del transfer**: la plata
+  nunca se mueve, no hay nada que devolver.
+- **Servicio / merchant:** copia `createGate({programId, payee, price,
+  mint})` + ~10 líneas de handler. Sin cuenta, sin API key, sin permiso —
+  **la chain es la API**.
+
+**Privacidad:** on-chain solo se ve *"hay un humano verificado nivel N,
+emitido por issuer X"* — nunca PII. La identidad real la guarda el issuer
+off-chain y revelarla requiere proceso legal hacia el issuer: accountability
+judicial, no trazabilidad masiva ni DNI público. (Contraste: en Skyfire
+issuer y verificador viven en el mismo servidor privado — una empresa lo ve
+todo y la credencial muere con ella; acá la credencial vive en la chain y el
+PII queda distribuido.)
+
+## 3. Por qué ahora (timing verificable)
 
 - ERC-8004 ("Trustless Agents") deployó mainnet el 29/01/2026 — identidad de
   agente **sin capa humana**. La ventana está abierta.
@@ -34,7 +56,7 @@ Tres primitivas, una instrucción `pay` atómica:
   KYA pero cerrado y off-chain: no consumible por programas, muere con la
   empresa. Somos abiertos, issuer-agnósticos, y program-enforceable.
 
-## 3. Qué está listo (devnet, verificable hoy)
+## 4. Qué está listo (devnet, verificable hoy)
 
 - **Programa `agentic_gate`** — `D8pcKtezTzhVA6fw2SLpyFP5wY1DfUiPJCVmeqqX1xG2`
   (Anchor 1.2.0, upgradeable). `pay` atómico + `init_mandate`/`revoke_mandate`/
@@ -54,7 +76,7 @@ Tres primitivas, una instrucción `pay` atómica:
   `OverPerTxLimit`, `PayeeNotWhitelisted`, `MandateRevoked` verificables en
   explorer (signatures en `docs/09`).
 
-## 4. Cómo se adopta — cero fricción
+## 5. Cómo se adopta — cero fricción
 
 **Sin cuenta, sin API key, sin permiso — la chain es la API.** Un servicio
 se suma declarando su wallet payee y el programId del gate: responde 402
@@ -69,7 +91,7 @@ dashboard (:3404) tiene una tab "Adopción" con el snippet literal y los
 servicios adoptantes respondiendo en vivo. Detalle completo:
 `docs/CANDIDATE_O_agentic-dni.md` §12.
 
-## 5. Qué NO está listo (honesto)
+## 6. Qué NO está listo (honesto)
 
 - **KYC real**: el issuer es mock — demuestra la capa, no la verificación.
   Producción = integrar un verificador (Persona/Veriff-class, ~$1-2/check).
@@ -82,7 +104,7 @@ servicios adoptantes respondiendo en vivo. Detalle completo:
   usa — un agente siempre puede hacer transfers libres por fuera. Lo que el
   gate cobra, el gate lo garantiza.
 
-## 6. Cómo correr la demo (devnet, ~5 min)
+## 7. Cómo correr la demo (devnet, ~5 min)
 
 Todo en WSL Ubuntu (`wsl -d Ubuntu -- bash -lc`), desde `demo/`:
 
@@ -95,9 +117,9 @@ bash scripts/run_beats.sh             # los 6 beats, con signatures verificables
 
 Guion de narración por beat + checklist de explorer: `demo/README.md`.
 Beat extra de adopción: `bash scripts/demo_adoption.sh` (service-z se suma
-en vivo — ver §4).
+en vivo — ver §5).
 
-## 7. Campos de submission Colosseum (listos para pegar)
+## 8. Campos de submission Colosseum (listos para pegar)
 
 **problemStatement:**
 > AI agents already move money on-chain, but nothing binds a payment to a
@@ -116,7 +138,10 @@ en vivo — ver §4).
 > `PaymentReceipt` event — all in one transaction. Plus a mock issuer service
 > (real SAS attestations via sas-lib), x402-shaped services (402 → pay →
 > X-Payment → 200), an agent CLI, and a read-only audit dashboard parsing
-> receipts from on-chain logs. Failed payments land on-chain as failed txs,
+> receipts from on-chain logs. If a check fails, the whole transaction
+> reverts before the SPL transfer — the money never moves, so there is
+> nothing to refund or dispute; that is what an on-chain program does and a
+> middleware cannot. Failed payments land on-chain as failed txs,
 > inspectable in the explorer. 21/21 tests against LiteSVM with the real SAS
 > program dumped from devnet.
 
@@ -137,11 +162,15 @@ en vivo — ver §4).
 > ERC-8004 provides pseudonymous agent identity with no human binding — we
 > complement it as the human layer, not compete. Skyfire provides KYA+payments
 > as a closed, off-chain service (JWTs verifiable only against their keys;
-> dies with the company; not consumable by on-chain programs). ~25 adjacent
-> Colosseum projects exist (agent passports, spend governance, wallets) with
-> zero winners — none made human-verification enforceable inside the payment
-> itself. Our differentiator: open, issuer-agnostic, program-enforceable on
-> the chain where x402 volume lives.
+> dies with the company; not consumable by on-chain programs) — issuer and
+> verifier live on one private server, so a single company sees everything.
+> On-chain we reveal only "a verified human, level N, issued by X" — never
+> PII; the real identity stays off-chain with the issuer and is unmasked only
+> through legal process: judicial accountability, not mass traceability.
+> ~25 adjacent Colosseum projects exist (agent passports, spend governance,
+> wallets) with zero winners — none made human-verification enforceable
+> inside the payment itself. Our differentiator: open, issuer-agnostic,
+> program-enforceable on the chain where x402 volume lives.
 
 **futureVision:**
 > The accountability layer for the agent economy: when agent-payment
@@ -150,9 +179,12 @@ en vivo — ver §4).
 > running, open, and composable becomes the standard. Roadmap: real KYC
 > issuers, facilitator integrations (PayAI/MCPay), receipt accounts for
 > program-level composability, optional ERC-8004 metadata bridge for
-> cross-chain agent identity.
+> cross-chain agent identity. None of this depends on regulation arriving —
+> merchants gate because they do not want fraud, not because a law mandates
+> it; if regulation lands, better an open-source layer already running than
+> a closed state registry.
 
-## 8. Pitch (90 seg, versión oral)
+## 9. Pitch (90 seg, versión oral)
 
 > Hoy los agentes mueven plata y nadie responde por ellos. Los facilitators y
 > merchants ya tienen el problema — fraude, liability — aunque no haya ley.

@@ -195,3 +195,27 @@ El gate es un programa abierto: cualquiera puede crear mandatos, pagar gateado o
 - **Cold-start de agentes**: attestation + mandato + fondos USDC; nada de eso se resuelve adoptando el verify.
 
 **Beat de adopción en vivo:** `bash scripts/demo_adoption.sh` — levanta service-z, muestra el 402, el revert `PayeeNotWhitelisted` on-chain (la chain decide), la autorización del owner y el pago 200. La tab "Adopción" del dashboard (:3404) muestra el snippet real y los adoptantes online.
+
+## 13. Cómo se usa — la vuelta por actor (framing canónico del usuario)
+
+> Framing marcado como CLAVE por el usuario: cómo se usa, qué se ve on-chain y qué no, y por qué "la plata nunca se mueve". Reitera lo ya decidido en §10-§12, en la forma más corta.
+
+### Los tres actores
+
+- **Humano / dueño** — hace algo **una sola vez**: se verifica con un issuer (KYC off-chain) y firma un mandato on-chain: *"mi agente gasta máx $5/tx, $20/mes, solo a estos servicios"*. Listo — de ahí en más no toca nada, salvo revocar.
+- **Agente** — paga en los servicios gateados. No presenta papeles: el programa chequea attestation + mandato en la misma transacción que mueve la plata.
+- **Servicio / merchant** — copia `createGate({programId, payee, price, mint})` + ~10 líneas de handler. Sin cuenta, sin API key, sin permiso: **la chain es la API**.
+
+### Privacidad — qué se ve on-chain y qué no
+
+En la chain solo se ve: *"hay un humano verificado de nivel N detrás de este agente, emitido por el issuer X"* — nivel, issuer, timestamp, estado de revocación. **Nunca PII.** La identidad real la custodia el issuer off-chain; revelarla requiere un proceso legal dirigido al issuer. Es **accountability judicial** — la misma forma que tiene un telco o un banco hoy — NO trazabilidad masiva ni DNI público.
+
+El contraste que hace esto arquitectura y no marketing: en Skyfire issuer y verificador viven en el mismo servidor privado — una empresa ve todo y la credencial muere con ella. Acá la credencial vive en la chain (la verifica cualquiera, sin permiso) y el PII queda distribuido donde corresponde.
+
+### La plata nunca se mueve
+
+Si el agente excede el límite, la transacción entera **revierte antes del transfer** — no hay nada que devolver ni que disputar. Eso es lo que un programa on-chain hace y un middleware estructuralmente no puede: el middleware *decide no cobrar*; acá el cobro ni siquiera existió.
+
+### No es un proyecto regulatorio
+
+El ecosistema se resguarda **solo, por incentivos de mercado**: el merchant exige humano verificado porque no quiere ser estafado, no porque una ley lo mande. La regulación en redacción (Filipinas HB 11014, Brasil PL 974/2026, US AI AGENT Act) es evidencia de que el problema es real — si nunca llega, funciona igual; si llega, mejor que exista una capa open-source corriendo a un registro estatal cerrado. (Desarrollado en `docs/12_DIFERENCIACION.md` §5.)

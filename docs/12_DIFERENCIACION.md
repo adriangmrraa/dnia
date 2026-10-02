@@ -74,6 +74,12 @@ resolvió identidad seudónima de agente y su spec **omite explícitamente el
 binding a humano**. No competimos con el estándar: somos la capa que le
 falta.
 
+La diferencia también es de **privacidad arquitectónica**: en Skyfire issuer
+y verificador viven en el mismo servidor privado — una empresa ve cada
+verificación y la credencial muere con ella. Acá la credencial es una cuenta
+pública que cualquiera lee sin permiso, y el PII nunca toca la chain: queda
+en el issuer, que solo un proceso legal puede obligar a revelar.
+
 ## 4. Adopción cero fricción — demostrada, no prometida
 
 El segundo modo de fallar en infra es exigir onboarding. dnia no exige
@@ -120,7 +126,22 @@ producto funciona igual: la demanda es económica y presente. Y si llega, la
 capa open-source ya está corriendo — mejor que la construya el ecosistema
 a que la imponga un monopolio o un registro estatal cerrado.
 
-## 6. Honestidad de scope (lo que NO decimos)
+## 6. Cómo se usa — los tres actores en una vuelta
+
+- **Humano / dueño:** se verifica **una sola vez** con un issuer (KYC
+  off-chain) y firma un mandato on-chain: *"mi agente gasta máx $5/tx,
+  $20/mes, solo a estos servicios"*. Listo — de ahí en más solo revoca si
+  quiere.
+- **Agente:** paga en los servicios gateados. No presenta nada: el programa
+  chequea attestation + mandato en la misma transacción. Si algo no cierra,
+  la tx entera revierte **antes del transfer** — la plata nunca se mueve, no
+  hay nada que devolver. Eso es lo que un programa on-chain hace y un
+  middleware no.
+- **Servicio / merchant:** copia `createGate({programId, payee, price,
+  mint})` + ~10 líneas de handler. Sin cuenta, sin API key, sin permiso —
+  la chain es la API.
+
+## 7. Honestidad de scope (lo que NO decimos)
 
 - El gate protege a los servicios que **optan por usarlo** — un agente
   siempre puede hacer transfers SPL libres fuera del gate. No vendemos
@@ -134,7 +155,7 @@ a que la imponga un monopolio o un registro estatal cerrado.
 - El recibo es un evento de programa (no PDA) en el MVP; `update_mandate`,
   bridge 8004 y auditoría mainnet están en `docs/10_ROADMAP.md`.
 
-## 7. La frase
+## 8. La frase
 
 > Los rails de pagos para agentes ya ganaron premios — MCPay, Latinum. Lo
 > que nadie construyó es quién puede pasar por esos rails. dnia es la

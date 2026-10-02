@@ -2,7 +2,7 @@
  * Docs (/docs) — la historia de adopción: quién adopta, qué hace y qué NO
  * necesita; la integración real (snippet literal de service-z); los niveles
  * de adopción y la fricción honesta que queda.
- * Fuente: docs/CANDIDATE_O_agentic-dni.md §12 + docs/11_PRESENTACION.md §4.
+ * Fuente: docs/CANDIDATE_O_agentic-dni.md §12-§13 + docs/11_PRESENTACION.md §2/§5.
  * Estática — funciona sin servicios levantados ni .env.
  */
 import { Link } from "./router";
@@ -96,6 +96,37 @@ export default function Docs() {
           decide a quién puede pagar su agente. El adoptante no pide permiso al
           gate — <b>exige</b> que el pago venga por el gate. Es x402 con
           enforcement on-chain: el middleware no decide, la tx revierte.
+        </p>
+      </section>
+
+      {/* ── La vuelta completa ── */}
+      <section className="card wide">
+        <h2 className="sect">La vuelta completa — en criollo</h2>
+        <ol className="steps">
+          <li>
+            <b>El humano, una vez:</b> se verifica con un issuer (KYC
+            off-chain) y firma el mandato on-chain —{" "}
+            <i>"mi agente gasta máx $5/tx, $20/mes, solo a estos
+            servicios"</i>. Nunca más toca nada, salvo revocar.
+          </li>
+          <li>
+            <b>El agente, siempre:</b> paga en los servicios gateados; el
+            programa chequea attestation + mandato en la misma tx. Si excede
+            el límite, la tx entera revierte antes del transfer —{" "}
+            <b>la plata nunca se mueve</b>, no hay nada que devolver.
+          </li>
+          <li>
+            <b>El servicio, ~10 líneas:</b>{" "}
+            <code>{"createGate({programId, payee, price, mint})"}</code> +
+            responder 402 y verificar el recibo. Sin cuenta, sin API key, sin
+            permiso — la chain es la API.
+          </li>
+        </ol>
+        <p className="note">
+          privacidad: on-chain solo se ve "humano verificado nivel N, issuer
+          X" — nunca PII. La identidad real queda en el issuer off-chain y
+          revelarla exige proceso legal hacia él: accountability judicial, no
+          trazabilidad masiva ni DNI público.
         </p>
       </section>
 
