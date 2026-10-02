@@ -155,3 +155,20 @@ Plantilla: fecha | meta | máquina y acceso real | archivos revisados | tareas e
 - **Fix aplicado:** decoder IDL conserva snake_case (`max_per_tx`, `payee_whitelist`) — mismo patrón del bug `service_ref` de S6; `f()` tolera ambos.
 - **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
 - **Siguiente acción:** S8 — `run_beats.sh` + `demo/README.md` + ejecución real de los 6 beats con dashboard reflejando revocación.
+
+## Sesión 16 — 02/10/2026 (apply S8 — demo 6 beats devnet real)
+
+- **Meta:** cerrar APPLY de `agentic-dni` con el slice S8 — orquestación de la demo de 6 beats + docs, ejecutado contra devnet real.
+- **Tareas ejecutadas:** (1) `demo/scripts/run_beats.sh` — beats encadenados con verificación de resultado esperado por beat (reverts deben contener el GateError exacto; exit 1 si algo no se comporta) + resumen ✓/✗, idempotente; (2) `demo/README.md` — guion ~90s en español + checklist explorer por beat + limitación honesta del MVP; (3) ejecución real `bash scripts/run_beats.sh`; (4) verificación post-beats con `check_dashboard_data.ts` (misma `dashboard/src/gate.ts` que la UI).
+- **Comandos/resultados (literales — devnet, 02/10/2026):**
+  - B1 attest A → `{"existing":true,"attestationPda":"pAht9t8UcZkmGSZXWEHSe1VPL2E6iMt42SYUQ2tdMXt"}` (idempotente — emitida en S6).
+  - B2 init_mandate A → ya vigente (idempotente): `max=5`, `cap=10`, whitelist=[X], `revoked=false`.
+  - B3 pay A→X $0.50 → 402 `invoice=e4fe4b4c6751262641a37e19376789e2` → tx **`tkfFinMDbvbd93j7yWXDdxpmseUKMLJbbRv6C2pgBsN8BrsjLbfqgCbASbK6xc498KAAjQfuTR5M8y9e13pZ6xq`** → `200` + receipt `{payer:A,payee:X,amount:500000,service_ref,mandate:3S7N…,timestamp:1790963342}`.
+  - B4 pay B→X (status `nunca-emitida`) → REVERTIDO **`AttestationMissing`**.
+  - B5a pay A→X $10 → REVERTIDO **`OverPerTxLimit`**; B5b pay A→Y $0.50 → REVERTIDO **`PayeeNotWhitelisted`**.
+  - B6 `revoke --agent a` → tx **`t2rEuxeLaJkECJYjEmHt8kjY5Xiy7dde3xA6h27PkRX8Dum2ufta4e4cMvBvjStj9MVejMaNFjf4UzXbqH4Ha8Z`** → pay final A→X → REVERTIDO **`MandateRevoked`**.
+  - `LOS 6 BEATS OK — devnet real` (exit 0).
+- **Dashboard reflejando revocación (post-beats):** `check_dashboard_data.ts` → mandato A `estado:"revocado"`, `revoked:true`, `totalSpent:"$1.50"`; ledger 5 txs (revoke ix + pago `tkfFin…` + pagos previos + init); attestation A `vigente` (revocar mandato ≠ revocar identidad).
+- **Pruebas y resultado:** S8 VERDE — los 6 beats corrieron en devnet con signatures reales verificables en explorer (`?cluster=devnet`).
+- **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
+- **Siguiente acción:** fase VERIFY (`sdd-verify` valida implementación vs spec) y luego ARCHIVE; demo lista para grabar/presentar.

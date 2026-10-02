@@ -92,10 +92,11 @@ El corazón del gate: los 14 pasos del diseño en una ix atómica.
 
 ## S8 — Orquestación de la demo de 6 beats + docs
 
-- [ ] `scripts/run_beats.sh`: beats 1–6 encadenados (attest A → init_mandate → pay feliz → pay B huérfano → over-limit + payee Y → revoke + pay final revertido) imprimiendo signatures/URLs.
-- [ ] `demo/README.md`: guion ~90 seg + checklist de verificación explorer por beat.
-- [ ] Ejecución real en devnet de los 6 beats; evidencia (signatures) registrada en `docs/SESSION_LOG.md`.
+- [x] `scripts/run_beats.sh`: beats 1–6 encadenados (attest A → init_mandate → pay feliz → pay B huérfano → over-limit + payee Y → revoke + pay final revertido) imprimiendo signatures/URLs; verifica el resultado esperado de cada beat (exit 1 si alguno no se comporta) e imprime resumen ✓/✗. Idempotente: attest/mandato ya existentes se reportan, mandato revocado hace close+re-init.
+- [x] `demo/README.md`: guion ~90 seg en español con narración por beat + tabla de checklist explorer por beat + limitación honesta del MVP (el gate protege al vendedor; SPL libres por fuera siguen existiendo).
+- [x] Ejecución real en devnet de los 6 beats; evidencia (signatures) registrada en `docs/SESSION_LOG.md`.
 - **Aceptación:** los 6 beats corren en devnet con el dashboard reflejando la revocación en vivo.
+- **Evidencia (02/10/2026, devnet real — `bash scripts/run_beats.sh` → LOS 6 BEATS OK):** B1 attest A → `{"existing":true}` en PDA `pAht9t8UcZkmGSZXWEHSe1VPL2E6iMt42SYUQ2tdMXt` (ya emitida en S6, idempotente); B2 mandato vigente reutilizado (status muestra spent_today $1.00 previo); B3 pay A→X $0.50 → 402 `invoice=e4fe4b4c…` → tx **`tkfFinMDbvbd93j7yWXDdxpmseUKMLJbbRv6C2pgBsN8BrsjLbfqgCbASbK6xc498KAAjQfuTR5M8y9e13pZ6xq`** → 200 con receipt `{payer,payee,amount:500000,service_ref,mandate,timestamp}`; B4 B→X (status `nunca-emitida`) → **AttestationMissing**; B5a A→X $10 → **OverPerTxLimit**; B5b A→Y $0.50 → **PayeeNotWhitelisted**; B6 `owner.ts revoke --agent a` → tx **`t2rEuxeLaJkECJYjEmHt8kjY5Xiy7dde3xA6h27PkRX8Dum2ufta4e4cMvBvjStj9MVejMaNFjf4UzXbqH4Ha8Z`** → siguiente pay A→X → **MandateRevoked**. **Dashboard post-beats** (`check_dashboard_data.ts`, misma `gate.ts` que la UI): mandato A `estado:"revocado"`, `revoked:true`, `totalSpent:$1.50` (3 pagos); ledger 5 txs — revoke ix + pago `tkfFin…` + pagos S6 + init; attestation A sigue `vigente` (revocar mandato no toca identidad — correcto).
 - **Cubre:** CA-1..CA-6 end-to-end, R-08..R-10, cierre del MVP definido en proposal.
 
 ## Reglas de ejecución (para `apply`)
