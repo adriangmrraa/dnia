@@ -10,6 +10,15 @@ permission. The chain is the API.
 
 Live on **Solana devnet** — every claim below links to a real transaction.
 
+## 70-second pitch
+
+<video src="https://raw.githubusercontent.com/adriangmrraa/dnia/main/docs/media/dnia-pitch.mp4" controls width="100%"></video>
+
+[▶ Watch the pitch video](docs/media/dnia-pitch.mp4) (70s · 1080p · English
+captions-ready). Motion graphics built with HyperFrames; every signature
+shown is a real devnet tx. Interactive slide deck: `demo/presentacion.html`
+(+ `presentacion.pdf`).
+
 ## The problem
 
 AI agents are starting to pay for things (x402, machine-to-machine APIs,
@@ -111,7 +120,7 @@ Requirements: Linux/WSL, Node 22+, Rust + Anchor 1.2, Solana CLI on devnet.
 
 ```bash
 cd demo
-bash scripts/start_services.sh        # issuer :3401 · svc X :3402 · svc Y :3403
+bash scripts/start_services.sh        # issuer :3401 · X :3402 · Y :3403 · demo-runner :3406
 bash scripts/sync_dashboard_env.sh    # writes dashboard/.env (pubkeys only)
 cd dashboard && npx vite --port 3404  # site → http://localhost:3404
 ```
@@ -145,10 +154,13 @@ Adoption beat: `bash scripts/demo_adoption.sh`
 ```text
 demo/            the product: program, services, dashboard, demo scripts
   programs/      Anchor program (agentic_gate)
-  services/      mock issuer, gated x402 services, gate-check.ts helper
+  services/      mock issuer, gated x402 services, demo-runner, gate-check.ts
   dashboard/     multi-page product site (Vite + React)
   scripts/       run_beats / demo_adoption / service lifecycle
-docs/            research gate, architecture, demo submission, roadmap
+  presentacion.html / .pdf   19-slide pitch deck (keynote-ready, offline)
+docs/            research gate, architecture, demo submission, roadmap,
+                 differentiation analysis (12), video brief (13),
+                 media/ (pitch video)
 sdd/             spec-driven development artifacts (proposal → archive)
 ```
 
