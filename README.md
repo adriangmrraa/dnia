@@ -12,9 +12,9 @@ Live on **Solana devnet** — every claim below links to a real transaction.
 
 ## 70-second pitch
 
-<video src="https://raw.githubusercontent.com/adriangmrraa/dnia/main/docs/media/dnia-pitch.mp4" controls width="100%"></video>
+<video src="https://adriangmrraa.github.io/dnia/media/dnia-pitch.mp4" controls width="100%"></video>
 
-[▶ Watch the pitch video](docs/media/dnia-pitch.mp4) (70s · 1080p · English
+[▶ Watch the pitch video](https://adriangmrraa.github.io/dnia/media/dnia-pitch.mp4) (70s · 1080p · English
 captions-ready). Motion graphics built with HyperFrames; every signature
 shown is a real devnet tx. Interactive slide deck: `demo/presentacion.html`
 (+ `presentacion.pdf`).
