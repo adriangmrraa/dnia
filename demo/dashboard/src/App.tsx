@@ -9,6 +9,7 @@
  */
 import { Link, usePath } from "./router";
 import { PROGRAM_ID, explorerAddr, short } from "./site";
+import { Brandmark } from "./ui";
 import Landing from "./Landing";
 import Dashboard from "./Dashboard";
 import Docs from "./Docs";
@@ -16,7 +17,7 @@ import DemoPage from "./DemoPage";
 import Colaborar from "./Colaborar";
 
 const NAV: { to: string; label: string }[] = [
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/dashboard", label: "Auditoría" },
   { to: "/docs", label: "Adopción" },
   { to: "/demo", label: "Demo" },
   { to: "/colaborar", label: "Colaborar" },
@@ -65,7 +66,8 @@ export default function App() {
       <nav className="topnav">
         <div className="topnav-inner">
           <Link to="/" className="brand">
-            agentic-<b>dni</b>
+            <Brandmark />
+            <b>dnia</b>
           </Link>
           <div className="topnav-links">
             {NAV.map((n) => (
@@ -85,16 +87,16 @@ export default function App() {
             rel="noreferrer"
             title={`programa ${PROGRAM_ID} — devnet`}
           >
-            devnet · {short(PROGRAM_ID)}
+            <i className="dot ok"></i>devnet · {short(PROGRAM_ID)}
           </a>
         </div>
       </nav>
       <div className="page">{page}</div>
       <footer className="foot">
         <div className="wrap foot-inner">
-          <span>
-            agentic-dni — accountability layer para pagos de agentes ·{" "}
-            <b>Apache-2.0</b>
+          <span className="brand">
+            <Brandmark size={16} />
+            <b>dnia</b> — la capa de confianza · <b>Apache-2.0</b>
           </span>
           <span className="muted">
             programa{" "}

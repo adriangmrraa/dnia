@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { CodeBlock, Gloss } from "./ui";
 import { DemoConfig, GateConfigView, explorerAddr } from "./gate";
 import {
   GATE_CHECK_SRC,
@@ -88,46 +89,57 @@ export default function Adoption({
     <>
       {/* ── El claim ── */}
       <article className="card wide">
-        <h2>Cómo se adopta — cero fricción</h2>
+        <h2 className="sect">Cómo se adopta — cero fricción</h2>
         <p className="plain">
           Un servicio se suma al gate{" "}
           <b>sin cuenta, sin API key y sin permiso</b>: declara su wallet
-          payee y el programId, responde 402 con los requirements y verifica
-          el recibo on-chain. <b>La chain es la API</b> — el programa exige
-          identidad + mandato en la misma tx que mueve la plata; el servicio
-          solo lee el recibo que el programa emitió.
+          payee y el programId, responde{" "}
+          <Gloss tip="HTTP 402 Payment Required: el servicio contesta «pagá primero» con los requisitos del pago">
+            402
+          </Gloss>{" "}
+          con los requirements y verifica el recibo on-chain.{" "}
+          <b>La chain es la API</b> — el programa exige identidad + mandato en
+          la misma tx que mueve la plata; el servicio solo lee el recibo que
+          el programa emitió.
         </p>
-        <ol className="steps">
+        <ol className="steps big">
           <li>
-            <b>Declarás tu cobro</b> — payee wallet + precio + el programId
-            del gate (público, devnet).
+            <p>
+              <b>Declarás tu cobro</b> — payee wallet + precio + el programId
+              del gate (público, devnet).
+            </p>
           </li>
           <li>
-            <b>Respondés 402</b> con los requirements si no hay{" "}
-            <code>X-Payment</code>.
+            <p>
+              <b>Respondés 402</b> con los requirements si no hay{" "}
+              <code>X-Payment</code>.
+            </p>
           </li>
           <li>
-            <b>Verificás el recibo</b> on-chain: payee, mint, monto e invoice
-            vinculante. Listo — cobrás pagos gateados.
+            <p>
+              <b>Verificás el recibo</b> on-chain: payee, mint, monto e
+              invoice vinculante. Listo — cobrás pagos gateados.
+            </p>
           </li>
         </ol>
         <p className="note">
           adoptar ≠ cobrarle a cualquiera: el OWNER de cada agente decide a
-          qué servicios puede pagar su agente (whitelist del mandato). Eso no
-          es fricción — es la feature.
+          qué servicios puede pagar su agente (
+          <Gloss tip="whitelist: la lista de payees que el dueño firmó dentro del mandato — el programa rechaza cualquier otro">
+            whitelist
+          </Gloss>{" "}
+          del mandato). Eso no es fricción — es la feature.
         </p>
       </article>
 
       {/* ── La integración literal ── */}
       <article className="card wide">
-        <h2>La integración completa — estas líneas son TODO</h2>
-        <p className="note">
-          extracto literal de <code>services/service-z/src/index.ts</code> —
-          el servicio adoptante del beat en vivo:
-        </p>
-        <pre className="code">
-          <code>{SNIPPET}</code>
-        </pre>
+        <h2 className="sect">La integración completa — estas líneas son TODO</h2>
+        <CodeBlock
+          file="services/service-z/src/index.ts — extracto literal (las líneas // ── INTEGRACIÓN)"
+          code={SNIPPET}
+          highlight
+        />
         <p className="plain">
           El resto del archivo es un express común (routes, listen).{" "}
           <code>createGate</code> encapsula requirements + verificación del
@@ -138,9 +150,11 @@ export default function Adoption({
             ver el helper completo — <code>services/gate-check.ts</code> (
             {GATE_CHECK_SRC.split("\n").length} líneas)
           </summary>
-          <pre className="code">
-            <code>{GATE_CHECK_SRC}</code>
-          </pre>
+          <CodeBlock
+            file="services/gate-check.ts"
+            code={GATE_CHECK_SRC}
+            highlight
+          />
         </details>
         <details>
           <summary>
@@ -148,15 +162,17 @@ export default function Adoption({
             <code>services/service-z/src/index.ts</code> (
             {SERVICE_Z_SRC.split("\n").length} líneas)
           </summary>
-          <pre className="code">
-            <code>{SERVICE_Z_SRC}</code>
-          </pre>
+          <CodeBlock
+            file="services/service-z/src/index.ts"
+            code={SERVICE_Z_SRC}
+            highlight
+          />
         </details>
       </article>
 
       {/* ── Adoptantes en vivo ── */}
       <article className="card wide">
-        <h2>Adoptantes en vivo</h2>
+        <h2 className="sect">Adoptantes en vivo</h2>
         <div className="adopters">
           {adopters.map((a) => {
             const h = health[a.key];
@@ -164,7 +180,10 @@ export default function Adoption({
               <div className="adopter" key={a.key}>
                 <div className="adopter-head">
                   <b>{a.label}</b>
-                  <span className={`verdict ${h?.online ? "ok" : "muted"}`}>
+                  <span className="chip">
+                    <i
+                      className={`dot ${h === undefined ? "off" : h.online ? "ok" : "bad"}`}
+                    ></i>
                     {h === undefined ? "…" : h.online ? "ONLINE" : "NO LEVANTADO"}
                   </span>
                 </div>
@@ -204,16 +223,17 @@ export default function Adoption({
 
       {/* ── Beat en vivo + honestidad ── */}
       <article className="card wide">
-        <h2>Verlo en vivo — beat de adopción</h2>
-        <pre className="code">
-          <code>bash scripts/demo_adoption.sh</code>
-        </pre>
+        <h2 className="sect">Verlo en vivo — beat de adopción</h2>
+        <CodeBlock file="terminal — WSL, parado en demo/" code="bash scripts/demo_adoption.sh" />
         <p className="plain">
-          Levanta <b>service-z</b> (:3405), prueba que ya responde 402, muestra
-          al agente A rebotando con <code>PayeeNotWhitelisted</code> on-chain
-          (la chain decide, no el servicio), el owner whitelisting a z con{" "}
-          <code>init_mandate</code>… y el mismo pago pasando a 200 con recibo
-          verificable.
+          Levanta <b>service-z</b> (:3405), prueba que ya responde{" "}
+          <Gloss tip="HTTP 402 Payment Required: el servicio contesta «pagá primero» con los requisitos del pago">
+            402
+          </Gloss>
+          , muestra al agente A rebotando con <code>PayeeNotWhitelisted</code>{" "}
+          on-chain (la chain decide, no el servicio), el owner whitelisting a
+          z con <code>init_mandate</code>… y el mismo pago pasando a 200 con
+          recibo verificable.
         </p>
         <p className="note">
           fricción honesta que queda: el owner crea/revoca mandatos con su

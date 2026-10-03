@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ui-redesign — preview del sistema (dnia)</title>
+<!--
+  Preview auto-contenido del design `sdd/changes/ui-redesign/design.md`.
+  Muestra tokens, componentes y mocks de página tal como quedaría el sitio.
+  Sin CDN, sin requests externas — abrir directo en el browser.
+  Las fuentes reales (Space Grotesk / Inter / JetBrains Mono) llegan en F1
+  como woff2 locales; acá se declaran con fallback para preview.
+-->
+<style>
+:root {
+  --bg:        #070b13;
+  --surface:   #0d1524;
+  --surface-2: #12203a;
+  --border:    #1d2c47;
+  --text:      #e8eef7;
+  --text-dim:  #8fa1bd;
+  --accent:    #2dd4bf;
+  --accent-2:  #a78bfa;
+  --grad: linear-gradient(120deg, var(--accent), var(--accent-2));
+  --ok:   #34d399;
+  --warn: #fbbf24;
+  --bad:  #fb7185;
+  --r-card: 14px;
+  --r-chip: 999px;
+  --glow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+          0 8px 30px rgb(0 0 0 / .45);
+  --f-display: "Space Grotesk", system-ui, sans-serif;
+  --f-body:    "Inter", system-ui, sans-serif;
+  --f-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.4rem; }
+a { color: var(--accent); text-decoration: none; }
+code { font-family: var(--f-mono); font-size: .85em; }
+
+/* ── nav mock ── */
+.topnav {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav-inner { max-width: 1120px; margin: 0 auto; padding: .7rem 1.4rem; display: flex; align-items: center; gap: 1.2rem; }
+.brand { display: flex; align-items: center; gap: .55rem; font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; color: var(--text); }
+.brand b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brandmark { width: 22px; height: 22px; flex: none; }
+.topnav-links { display: flex; gap: .2rem; }
+.topnav-links a { color: var(--text-dim); font-size: .88rem; padding: .35rem .75rem; border-radius: 8px; position: relative; }
+.topnav-links a:hover { color: var(--text); }
+.topnav-links a.sel { color: var(--text); }
+.topnav-links a.sel::after { content: ""; position: absolute; left: .75rem; right: .75rem; bottom: 2px; height: 2px; border-radius: 2px; background: var(--grad); }
+.nav-chip { margin-left: auto; }
+
+/* ── chips / dots / verdicts ── */
+.chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  border: 1px solid var(--border); border-radius: var(--r-chip);
+  padding: .15rem .7rem; font-size: .78rem; color: var(--text-dim);
+  background: var(--surface);
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulse 2s infinite; }
+.dot.off { background: var(--text-dim); }
+.dot.bad { background: var(--bad); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .dot.ok { animation: none; } }
+
+.verdict {
+  display: inline-flex; align-items: center; gap: .4rem;
+  border-radius: var(--r-chip); padding: .15rem .7rem;
+  font-weight: 600; font-size: .78rem; white-space: nowrap;
+}
+.verdict.ok   { background: color-mix(in srgb, var(--ok) 14%, transparent);   color: var(--ok);   border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent); }
+.verdict.bad  { background: color-mix(in srgb, var(--bad) 14%, transparent);  color: var(--bad);  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent); }
+.verdict.warn { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
+.verdict.muted{ background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+.verdict i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; font-style: normal; }
+
+/* ── hero mock ── */
+.hero { padding: 4.5rem 0 2rem; text-align: center; }
+.hero .chip { margin-bottom: 1.2rem; }
+.hero h1 {
+  font-family: var(--f-display); font-size: 3.2rem; line-height: 1.08;
+  letter-spacing: -.02em; margin: 0 auto 1.1rem; max-width: 22ch;
+}
+.hero .hl { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { color: var(--text-dim); font-size: 1.12rem; line-height: 1.6; max-width: 46rem; margin: 0 auto; }
+.cta-row { display: flex; gap: .7rem; justify-content: center; margin-top: 1.8rem; flex-wrap: wrap; }
+.btn {
+  display: inline-block; border-radius: 10px; padding: .65rem 1.3rem;
+  font-size: .92rem; font-weight: 600; font-family: var(--f-body);
+  border: 1px solid var(--border); color: var(--text); background: var(--surface);
+  transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+.btn.primary { background: var(--grad); border: none; color: #06121a; }
+.btn.primary:hover { filter: brightness(1.1); }
+.stats { display: flex; gap: 2.4rem; justify-content: center; margin-top: 2.6rem; flex-wrap: wrap; }
+.stat b { display: block; font-family: var(--f-display); font-size: 1.7rem; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat span { font-size: .8rem; color: var(--text-dim); }
+
+/* ── secciones del preview ── */
+.psect { margin: 4rem 0 1.4rem; }
+.psect h2 { font-family: var(--f-display); font-size: 1.4rem; margin: 0 0 .3rem; }
+.psect .cap { color: var(--text-dim); font-size: .88rem; margin: 0 0 1.4rem; }
+.rule { border: none; border-top: 1px solid var(--border); margin: 4rem 0 0; }
+
+/* swatches */
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .8rem; }
+.sw { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.sw i { display: block; height: 64px; }
+.sw div { padding: .5rem .7rem; font-size: .75rem; color: var(--text-dim); }
+.sw b { display: block; color: var(--text); font-size: .8rem; font-family: var(--f-mono); }
+
+/* type scale */
+.type div { margin: .6rem 0; padding-bottom: .6rem; border-bottom: 1px dashed var(--border); }
+.type small { display: block; color: var(--text-dim); font-family: var(--f-mono); font-size: .7rem; margin-bottom: .15rem; }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .9rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); padding: 1.1rem 1.2rem; }
+.card.lift { transition: transform .15s, box-shadow .15s; }
+.card.lift:hover { transform: translateY(-3px); box-shadow: var(--glow); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.card h3 { font-family: var(--f-display); margin: .2rem 0 .15rem; font-size: 1.05rem; }
+.card .sub { font-family: var(--f-mono); font-size: .7rem; color: var(--accent-2); margin: 0 0 .5rem; }
+.card p { font-size: .9rem; color: var(--text-dim); margin: .4rem 0 0; }
+.prim-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 1rem; background: color-mix(in srgb, var(--accent-2) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent); margin-bottom: .6rem; }
+
+/* gloss demo */
+.term-gloss { border-bottom: 1px dotted var(--accent); cursor: help; }
+
+/* stepper */
+.stepper { display: flex; align-items: center; gap: 0; margin: 1rem 0; overflow-x: auto; padding: .4rem 0; }
+.stp { display: flex; flex-direction: column; align-items: center; gap: .45rem; min-width: 90px; }
+.stp i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem; font-weight: 700; font-family: var(--f-mono); border: 2px solid var(--border); background: var(--surface); color: var(--text-dim); transition: all .3s; }
+.stp.on i { border-color: var(--ok); color: var(--ok); box-shadow: 0 0 12px color-mix(in srgb, var(--ok) 50%, transparent); }
+.stp.run i { border-color: var(--accent); color: var(--accent); animation: pulse 1.2s infinite; }
+.stp.fail i { border-color: var(--bad); color: var(--bad); }
+.stp span { font-size: .68rem; color: var(--text-dim); text-align: center; line-height: 1.2; }
+.stp-link { flex: 1; height: 2px; min-width: 16px; background: var(--border); margin: 0 2px 1.4rem; }
+.stp-link.on { background: var(--ok); }
+
+/* terminal */
+.term { background: #040810; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-family: var(--f-mono); font-size: .78rem; }
+.term-bar { display: flex; align-items: center; gap: .45rem; padding: .55rem .8rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; }
+.term-bar .r { background: #f87171; } .term-bar .y { background: #fbbf24; } .term-bar .g { background: #34d399; }
+.term-bar span { margin-left: .5rem; font-size: .72rem; color: var(--text-dim); }
+.term pre { margin: 0; padding: .9rem 1rem; line-height: 1.5; color: #c9d4e6; white-space: pre-wrap; }
+.term .ok { color: var(--ok); } .term .err { color: var(--bad); } .term .dim { color: var(--text-dim); }
+
+/* codeblock */
+.codeblock { background: #040810; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.codeblock-bar { display: flex; justify-content: space-between; align-items: center; padding: .5rem .9rem; background: var(--surface); border-bottom: 1px solid var(--border); font-family: var(--f-mono); font-size: .72rem; color: var(--text-dim); }
+.codeblock-bar button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border); border-radius: 6px; padding: .1rem .55rem; cursor: pointer; }
+.codeblock pre { margin: 0; padding: .9rem 1rem; font-family: var(--f-mono); font-size: .78rem; line-height: 1.55; overflow-x: auto; color: #c9d4e6; }
+.tok-k { color: var(--accent-2); } .tok-s { color: var(--ok); } .tok-c { color: var(--text-dim); font-style: italic; } .tok-f { color: var(--accent); }
+
+/* stats strip dashboard */
+.statstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .9rem; }
+.statcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); padding: 1rem 1.1rem; }
+.statcard .lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: .35rem; }
+.statcard .val { font-family: var(--f-display); font-size: 1.3rem; display: flex; align-items: center; gap: .5rem; }
+.statcard .val small { font-family: var(--f-body); font-size: .78rem; color: var(--text-dim); font-weight: 400; }
+.statcard .val.ok { color: var(--ok); } .statcard .val.warn { color: var(--warn); }
+
+/* timeline */
+.timeline { position: relative; padding-left: 1.6rem; }
+.timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+.tl { position: relative; padding: .5rem 0 .9rem; }
+.tl::before { content: ""; position: absolute; left: -1.35rem; top: .85rem; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--text-dim); }
+.tl.ok::before { border-color: var(--ok); background: var(--ok); }
+.tl.fail::before { border-color: var(--bad); background: var(--bad); }
+.tl b { font-size: .95rem; }
+.tl .n { font-family: var(--f-mono); font-size: .72rem; color: var(--accent); margin-right: .5rem; }
+.tl p { margin: .15rem 0 0; font-size: .85rem; color: var(--text-dim); }
+.tl a { font-family: var(--f-mono); font-size: .75rem; }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV MOCK ═══ -->
+<nav class="topnav"><div class="topnav-inner">
+  <span class="brand">
+    <svg class="brandmark" viewBox="0 0 24 24" fill="none"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7L12 2z" stroke="url(#g)" stroke-width="1.8"/><path d="M8 12.5l2.6 2.6L16.5 9" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#2dd4bf"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs></svg>
+    agentic-<b>dni</b>
+  </span>
+  <div class="topnav-links">
+    <a href="#">Dashboard</a><a href="#">Adopción</a><a href="#" class="sel">Demo</a><a href="#">Colaborar</a>
+  </div>
+  <span class="chip nav-chip"><i class="dot ok"></i>devnet · D8pc…X1xG2</span>
+</div></nav>
+
+<main class="wrap">
+
+<!-- ═══ HERO MOCK ═══ -->
+<section class="hero">
+  <span class="chip"><i class="dot ok"></i>solana devnet · en vivo</span>
+  <h1>Los agentes ya mueven plata.<br><span class="hl">Que alguien responda.</span></h1>
+  <p class="lede">
+    agentic-dni hace que cada pago de un agente exija — en la misma
+    transacción — una <span class="term-gloss" title="attestation SAS: credencial on-chain emitida por un verificador">credencial</span>,
+    un <span class="term-gloss" title="mandato: permiso firmado por el dueño con límites de monto y destinos">permiso del dueño</span>
+    y deja un recibo público. Si algo no cierra, la plata nunca se mueve.
+  </p>
+  <div class="cta-row">
+    <a class="btn primary" href="#">▶ Verlo funcionar — 90s</a>
+    <a class="btn" href="#">Auditoría en vivo</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>6/6</b><span>beats · txs reales devnet</span></div>
+    <div class="stat"><b>~10</b><span>líneas para adoptar</span></div>
+    <div class="stat"><b>0</b><span>API keys · permisos · registro</span></div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ TOKENS ═══ -->
+<section class="psect" id="tokens">
+  <h2>1 · Paleta — azul noche + teal/violeta de marca</h2>
+  <p class="cap">Semánticos reservados a veredictos on-chain. El azul GitHub desaparece.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#070b13"></i><div><b>--bg</b>#070b13 · fondo</div></div>
+    <div class="sw"><i style="background:#0d1524"></i><div><b>--surface</b>#0d1524 · cards</div></div>
+    <div class="sw"><i style="background:#12203a"></i><div><b>--surface-2</b>#12203a · elevado</div></div>
+    <div class="sw"><i style="background:#1d2c47"></i><div><b>--border</b>#1d2c47 · bordes</div></div>
+    <div class="sw"><i style="background:#2dd4bf"></i><div><b>--accent</b>#2dd4bf · acción</div></div>
+    <div class="sw"><i style="background:#a78bfa"></i><div><b>--accent-2</b>#a78bfa · identidad</div></div>
+    <div class="sw"><i style="background:linear-gradient(120deg,#2dd4bf,#a78bfa)"></i><div><b>--grad</b>marca · hero, brandmark</div></div>
+    <div class="sw"><i style="background:#34d399"></i><div><b>--ok</b>#34d399 · aceptado</div></div>
+    <div class="sw"><i style="background:#fbbf24"></i><div><b>--warn</b>#fbbf24 · vencido</div></div>
+    <div class="sw"><i style="background:#fb7185"></i><div><b>--bad</b>#fb7185 · rechazado</div></div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ TYPE ═══ -->
+<section class="psect">
+  <h2>2 · Tipografía — carácter en títulos, aire en el cuerpo</h2>
+  <p class="cap">Space Grotesk (display) + Inter (body) + JetBrains Mono — woff2 locales, cero CDN.</p>
+  <div class="type">
+    <div><small>display 3.2rem — hero</small><span style="font-family:var(--f-display);font-size:2.6rem;font-weight:700;letter-spacing:-.02em">Que alguien responda.</span></div>
+    <div><small>display 1.5rem — sección</small><span style="font-family:var(--f-display);font-size:1.5rem;font-weight:600">Tres primitivas, una transacción</span></div>
+    <div><small>body 1rem — texto corrido (antes 0.85)</small><span>El programa exige credencial y permiso en la misma tx que mueve la plata. Si algo no cierra, revierte.</span></div>
+    <div><small>mono 0.85rem — addresses / código</small><code>D8pcKtezTzhVA6fw2SLpyFP5wY1DfUiPJCVmeqqX1xG2</code></div>
+    <div><small>caption 0.8rem — muted</small><span style="color:var(--text-dim);font-size:.8rem">contraste AA · --text-dim #8fa1bd sobre --surface</span></div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ COMPONENTES ═══ -->
+<section class="psect">
+  <h2>3 · Componentes</h2>
+  <p class="cap">Botones, verdicts con dot, status en vivo, chips — todo CSS puro.</p>
+  <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
+    <a class="btn primary" href="#">▶ Correr demo</a>
+    <a class="btn" href="#">Secundario</a>
+    <span class="verdict ok"><i></i>PAGO ACEPTADO</span>
+    <span class="verdict bad"><i></i>RECHAZADO</span>
+    <span class="verdict warn"><i></i>VENCIDA</span>
+    <span class="verdict muted"><i></i>operación</span>
+    <span class="chip"><i class="dot ok"></i>ONLINE</span>
+    <span class="chip"><i class="dot off"></i>OFFLINE</span>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ DASHBOARD MOCK ═══ -->
+<section class="psect">
+  <h2>4 · Dashboard — el estado de un vistazo</h2>
+  <p class="cap">Status strip arriba de todo: lo que el jurado tiene que ver en 2 segundos.</p>
+  <div class="statstrip">
+    <div class="statcard"><div class="lbl">Credencial</div><div class="val ok"><i class="dot ok"></i>Verificado <small>nivel 2 · SAS</small></div></div>
+    <div class="statcard"><div class="lbl">Permiso del dueño</div><div class="val">Vigente <small>revocable</small></div></div>
+    <div class="statcard"><div class="lbl">Gastó hoy</div><div class="val">$0.50 <small>de $10 cap</small></div></div>
+    <div class="statcard"><div class="lbl">Pagos en el ledger</div><div class="val">9 <small>3 rechazados por la chain</small></div></div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ DEMO MOCK ═══ -->
+<section class="psect">
+  <h2>5 · /demo — el stepper que corre en vivo</h2>
+  <p class="cap">Cada nodo se enciende al parsear el output del runner. Los rechazos son rojos a propósito: son txs fallidas reales.</p>
+  <div class="card">
+    <div class="stepper">
+      <div class="stp on"><i>1</i><span>credencial emitida</span></div><div class="stp-link on"></div>
+      <div class="stp on"><i>2</i><span>permiso firmado</span></div><div class="stp-link on"></div>
+      <div class="stp on"><i>3</i><span>pago aceptado</span></div><div class="stp-link on"></div>
+      <div class="stp run"><i>4</i><span>agente sin credencial</span></div><div class="stp-link"></div>
+      <div class="stp"><i>5</i><span>límites</span></div><div class="stp-link"></div>
+      <div class="stp"><i>6</i><span>revocación</span></div>
+    </div>
+    <div class="term">
+      <div class="term-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>run_beats.sh — devnet</span></div>
+      <pre><span class="ok">✓ beat 3 — pago $0.50 → Servicio X</span>
+  <span class="dim">sig 3W9HSVZF…Sbdwnm8 → explorer</span>
+<span class="err">✗ beat 4 — rechazado: nadie verificó al humano</span>
+  <span class="dim">AttestationMissing · sig 5fQegTbi…m5XXSo</span>
+<span class="dim">▸ beat 5 — corriendo…</span></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ CARDS / COPY ═══ -->
+<section class="psect">
+  <h2>6 · Copy en criollo — la jerga es el apellido, no el nombre</h2>
+  <p class="cap">Pasale el mouse por las palabras punteadas: tooltip con la traducción técnica.</p>
+  <div class="cards">
+    <article class="card lift">
+      <div class="prim-icon">🪪</div>
+      <h3>Credencial</h3>
+      <p class="sub">attestation SAS</p>
+      <p>Un verificador confirma que hay <b>un humano</b> detrás de la wallet del agente. Solo se ve nivel + fecha — nunca datos personales.</p>
+    </article>
+    <article class="card lift">
+      <div class="prim-icon">✍️</div>
+      <h3>Permiso</h3>
+      <p class="sub">mandato on-chain</p>
+      <p>El dueño firma los límites: cuánto por pago, cuánto por día y a quiénes puede pagarle. Lo puede revocar cuando quiera.</p>
+    </article>
+    <article class="card lift">
+      <div class="prim-icon">🧾</div>
+      <h3>Recibo</h3>
+      <p class="sub">PaymentReceipt</p>
+      <p>Cada pago deja un recibo público: quién pagó, a quién, cuánto y cuándo. Es la prueba si hay una disputa.</p>
+    </article>
+  </div>
+  <p class="cap" style="margin-top:1rem">En código y detalles la jerga sigue intacta — es para devs:</p>
+  <div class="codeblock">
+    <div class="codeblock-bar"><span>services/service-z/src/index.ts</span><button>copiar</button></div>
+    <pre><span class="tok-c">// el servicio verifica el recibo on-chain — ~10 líneas, sin API key</span>
+<span class="tok-k">const</span> gate = <span class="tok-f">createGate</span>({ programId, payee, price: <span class="tok-s">0.50</span>, mint });
+app.<span class="tok-f">get</span>(<span class="tok-s">"/api/premium"</span>, gate.<span class="tok-f">requirePayment</span>(), handler);</pre>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══ TIMELINE ═══ -->
+<section class="psect">
+  <h2>7 · Evidencia — los 6 beats como timeline</h2>
+  <p class="cap">Reemplaza la tabla densa de la landing. La tabla completa sobrevive en un details.</p>
+  <div class="card">
+    <div class="timeline">
+      <div class="tl ok"><span class="n">beat 1</span><b>Credencial emitida</b><p>Un verificador attestó al agente A en devnet. · <a href="#">tx ↗</a></p></div>
+      <div class="tl ok"><span class="n">beat 2</span><b>Permiso firmado</b><p>El dueño autorizó: máx $5 por pago, $10/día, solo Servicio X. · <a href="#">tx ↗</a></p></div>
+      <div class="tl ok"><span class="n">beat 3</span><b>Pago aceptado</b><p>A pagó $0.50 a X — credencial ✓ permiso ✓ → transfer + recibo. · <a href="#">tx ↗</a></p></div>
+      <div class="tl fail"><span class="n">beat 4</span><b>Agente sin credencial → rechazado</b><p>B tiene permiso pero nadie lo verificó: la tx falla on-chain, no un middleware. · <a href="#">tx fallida ↗</a></p></div>
+      <div class="tl fail"><span class="n">beat 5</span><b>Límites excedidos → rechazados</b><p>$10 con máximo $5 · pago a un servicio no autorizado. Dos reverts reales. · <a href="#">txs ↗</a></p></div>
+      <div class="tl fail"><span class="n">beat 6</span><b>Revocación en vivo</b><p>El dueño revoca y el mismo pago del beat 3 ahora revierte. · <a href="#">txs ↗</a></p></div>
+    </div>
+  </div>
+</section>
+
+<footer style="margin:4rem 0 2.5rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.8rem;font-size:.78rem;color:var(--text-dim)">
+  <span>ui-redesign · preview del sistema — <a href="./design.md">design.md</a></span>
+  <span>agentic-dni · solana devnet · Apache-2.0</span>
+</footer>
+</main>
+</body>
+</html>

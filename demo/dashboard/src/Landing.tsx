@@ -1,9 +1,11 @@
 /**
- * Landing (/) — el pitch hecho visual: qué es, las 3 primitivas, el flujo
- * atómico de `pay`, la evidencia devnet real (signatures → explorer) y
- * por qué ahora. Todo estático: esta página funciona offline y sin .env.
+ * Landing (/) — "historia que baja": hero criollo → problema → primitivas
+ * (Credencial/Permiso/Recibo) → flujo atómico → evidencia en timeline →
+ * actores → por qué ahora → privacidad/negocio/limitación → CTA a /demo.
+ * Todo estático: esta página funciona offline y sin .env.
  */
 import { Link } from "./router";
+import { Gloss, useReveal } from "./ui";
 import {
   ADDRESSES,
   BEATS,
@@ -13,40 +15,57 @@ import {
   short,
 } from "./site";
 
+/* Títulos criollos por beat — la data real (desc/sigs/err) sale de site.ts. */
+const BEAT_TITLES: Record<string, string> = {
+  "1": "Credencial emitida",
+  "2": "Permiso firmado",
+  "3": "Pago aceptado",
+  "4": "Agente sin credencial → rechazado",
+  "5a": "Límite por pago excedido → rechazado",
+  "5b": "Servicio no autorizado → rechazado",
+  "6": "Revocación en vivo",
+};
+
 const PRIMITIVES = [
   {
-    icon: "①",
-    name: "Identidad",
-    q: "¿Quién está atrás?",
+    icon: "🪪",
+    name: "Credencial",
+    q: "¿Hay un humano detrás?",
+    sub: "attestation SAS",
     body: (
       <>
-        Attestation <b>SAS real</b>: un issuer verifica que hay un humano
-        detrás de la wallet del agente. Divulgación selectiva — solo expone
-        nivel + timestamp, <b>nunca PII on-chain</b>. Revocable por el issuer.
+        Un{" "}
+        <Gloss tip="issuer: el verificador que emite (y puede revocar) las credenciales — hace el KYC off-chain">
+          verificador
+        </Gloss>{" "}
+        confirma que hay <b>un humano</b> detrás de la wallet del agente. Solo
+        se ve nivel + fecha — <b>nunca datos personales</b>. Y lo puede
+        revocar cuando quiera.
       </>
     ),
   },
   {
-    icon: "②",
-    name: "Mandato",
-    q: "¿Qué autorizó?",
+    icon: "✍️",
+    name: "Permiso",
+    q: "¿Qué autorizó el dueño?",
+    sub: "mandato PDA",
     body: (
       <>
-        PDA firmado por el owner: máximo por tx, cap diario, whitelist de
-        payees, expiración, revocable. Los contadores de gasto los muta{" "}
-        <b>solo el programa</b>.
+        El dueño firma los límites: <b>cuánto por pago, cuánto por día</b> y a
+        qué servicios puede pagarle. Lo puede revocar cuando quiera — los
+        contadores de gasto los muta <b>solo el programa</b>.
       </>
     ),
   },
   {
-    icon: "③",
+    icon: "🧾",
     name: "Recibo",
     q: "¿Qué pasó?",
+    sub: "PaymentReceipt",
     body: (
       <>
-        <code>PaymentReceipt</code> (7 campos) emitido por el programa en la
-        misma tx: pagador, payee, monto, mint, invoice, mandato, timestamp.
-        Evidencia auditable para siempre.
+        Cada pago deja un <b>recibo público</b>: quién pagó, a quién, cuánto y
+        cuándo — con el pedido vinculado. Es la prueba si hay una disputa.
       </>
     ),
   },
@@ -58,11 +77,12 @@ const ACTORS = [
     tag: "una vez y listo",
     body: (
       <>
-        Se verifica <b>una sola vez</b> con un issuer (KYC off-chain) y firma
-        un mandato on-chain:{" "}
-        <i>
-          "mi agente gasta máx $5/tx, $20/mes, solo a estos servicios"
-        </i>
+        Se verifica <b>una sola vez</b> con un{" "}
+        <Gloss tip="issuer: el verificador que emite (y puede revocar) las credenciales — hace el KYC off-chain">
+          issuer
+        </Gloss>{" "}
+        (KYC off-chain) y firma un permiso on-chain:{" "}
+        <i>"mi agente gasta máx $5 por pago, $10 por día, solo a este servicio"</i>
         . Después no toca nada — salvo revocar.
       </>
     ),
@@ -72,9 +92,9 @@ const ACTORS = [
     tag: "en cada pago",
     body: (
       <>
-        Paga en los servicios gateados. No presenta nada: el programa chequea
-        attestation + mandato en la misma tx. Si algo no cierra,{" "}
-        <b>la plata nunca se mueve</b> — la tx revierte antes del transfer.
+        Paga en los servicios que usan la capa. No presenta nada: el programa
+        chequea credencial + permiso en la misma transacción. Si algo no
+        cierra, <b>la plata nunca se mueve</b> — revierte antes de transferir.
       </>
     ),
   },
@@ -94,20 +114,20 @@ const ACTORS = [
 
 const FLOW = [
   {
-    step: "1 · attestation",
-    txt: "el programa re-deriva la PDA SAS del agente y la lee — falta, vencida o revocada → revert",
+    step: "1 · credencial",
+    txt: "primero mira la credencial: ¿hay un humano verificado detrás de esta wallet? Falta, vencida o revocada → la tx muere acá",
   },
   {
-    step: "2 · mandato",
-    txt: "lee el Mandate PDA del owner — monto > máx/tx, cap diario excedido, payee fuera de whitelist, vencido o revocado → revert",
+    step: "2 · permiso",
+    txt: "después el permiso del dueño: monto por pago, tope diario, servicio autorizado, vencimiento, revocación — cualquier cosa fuera → revert",
   },
   {
-    step: "3 · transfer",
-    txt: "recién ahí mueve la plata: SPL transfer USDC-test agente → servicio",
+    step: "3 · plata",
+    txt: "recién ahí mueve la plata: transferencia de tokens del agente a la cuenta del servicio",
   },
   {
     step: "4 · recibo",
-    txt: "emite PaymentReceipt — la evidencia que el servicio verifica para entregar el recurso",
+    txt: "y deja el recibo público: la prueba que el servicio verifica para entregar el recurso",
   },
 ];
 
@@ -146,70 +166,99 @@ const PRIVACY = [
 ];
 
 export default function Landing() {
+  const ref = useReveal<HTMLElement>();
   return (
-    <main className="wrap">
-      {/* ── Hero ── */}
+    <main className="wrap" ref={ref}>
+      {/* ── 1 · Hero ── */}
       <section className="hero">
-        <p className="chip">solana devnet · Anchor 1.2.0</p>
+        <span className="chip">
+          <i className="dot ok"></i>solana{" "}
+          <Gloss tip="devnet: la red de prueba pública de Solana — transacciones reales, plata de mentira">
+            devnet
+          </Gloss>{" "}
+          · en vivo
+        </span>
         <h1>
-          Pagos de agentes con <span className="hl">accountability exigible</span>{" "}
-          on-chain
+          Los agentes ya mueven plata.
+          <br />
+          <span className="hl">Que alguien responda.</span>
         </h1>
         <p className="lede">
-          Hoy los agentes mueven plata y nadie responde por ellos. agentic-dni
-          es la capa donde <b>identidad, autorización y recibo son exigidos por
-          el programa</b> — en la misma transacción que mueve la plata. Sin
-          credencial válida o sin mandato que cubra el pago:{" "}
-          <b>la tx revierte</b>.
+          dnia hace que cada pago de un agente exija — en la misma
+          transacción — una{" "}
+          <Gloss tip="attestation SAS: credencial on-chain emitida por un verificador">
+            credencial
+          </Gloss>
+          , un{" "}
+          <Gloss tip="Mandate PDA: la cuenta del programa que guarda la policy firmada por el dueño">
+            permiso del dueño
+          </Gloss>{" "}
+          y deje un{" "}
+          <Gloss tip="PaymentReceipt: recibo público que emite el programa en la misma tx — quién pagó, a quién, cuánto y cuándo">
+            recibo público
+          </Gloss>
+          . Si algo no cierra, la plata nunca se mueve.
         </p>
         <div className="cta-row">
-          <Link to="/dashboard" className="btn primary">
-            Ver la auditoría en vivo →
+          <Link to="/demo" className="btn primary">
+            ▶ Verlo funcionar — 90s
           </Link>
-          <Link to="/docs" className="btn">
-            Cómo se adopta
+          <Link to="/dashboard" className="btn">
+            Auditoría en vivo
           </Link>
-          <Link to="/demo" className="btn">
-            Correr la demo
-          </Link>
+        </div>
+        <div className="stats">
+          <div className="stat">
+            <b>6/6</b>
+            <span>beats · txs reales devnet</span>
+          </div>
+          <div className="stat">
+            <b>~10</b>
+            <span>líneas para adoptar</span>
+          </div>
+          <div className="stat">
+            <b>0</b>
+            <span>API keys · permisos · registro</span>
+          </div>
         </div>
       </section>
 
-      {/* ── Tres primitivas ── */}
-      <section>
-        <h2 className="sect">Tres primitivas, una instrucción <code>pay</code></h2>
-        <div className="adopters trio">
+      {/* ── 2 · El problema ── */}
+      <section className="fade-up">
+        <h2 className="sect">El problema</h2>
+        <article className="card">
+          <p className="plain" style={{ fontSize: "1.05rem", lineHeight: 1.6 }}>
+            Hoy un agente con una wallet puede pagar lo que sea, a quien sea —
+            y si sale mal, <b>nadie responde</b>. El servicio cobra y no sabe
+            si hay un humano detrás, si ese humano autorizó el gasto o cómo
+            reclamar después. La chain mueve la plata perfecto; lo que no
+            mueve sola es la <b>responsabilidad</b>. dnia es la capa
+            que falta: credencial + permiso + recibo, exigidos por el
+            programa, no por la buena voluntad de nadie.
+          </p>
+        </article>
+      </section>
+
+      {/* ── 3 · Tres primitivas ── */}
+      <section className="fade-up">
+        <h2 className="sect">Tres primitivas, una transacción</h2>
+        <div className="trio">
           {PRIMITIVES.map((p) => (
-            <article className="card" key={p.name}>
-              <h3 className="prim">
-                <span className="prim-icon">{p.icon}</span> {p.name}
-              </h3>
-              <p className="prim-q">{p.q}</p>
+            <article className="card lift" key={p.name}>
+              <div className="prim-icon">{p.icon}</div>
+              <h3 className="prim">{p.name}</h3>
+              <p className="prim-q">
+                {p.q} · <code>{p.sub}</code>
+              </p>
               <p className="plain">{p.body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      {/* ── Cómo se usa ── */}
-      <section>
-        <h2 className="sect">Cómo se usa — tres actores, una vuelta</h2>
-        <div className="adopters trio">
-          {ACTORS.map((a) => (
-            <article className="card" key={a.who}>
-              <h3 className="prim">{a.who}</h3>
-              <p className="prim-q">{a.tag}</p>
-              <p className="plain">{a.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Flujo atómico ── */}
-      <section>
-        <h2 className="sect">
-          El flujo atómico — todo o nada en UNA transacción
-        </h2>
+      {/* ── 4 · El flujo atómico ── */}
+      <section className="fade-up">
+        <h2 className="sect">Todo o nada — en UNA transacción</h2>
         <div className="flow">
           {FLOW.map((f, i) => (
             <div className="flow-step" key={f.step}>
@@ -222,69 +271,114 @@ export default function Landing() {
           ))}
         </div>
         <p className="note">
-          Cualquier check que falla revierte la transacción completa: ni el
+          abajo del capó: el programa re-deriva la{" "}
+          <Gloss tip="attestation SAS: credencial on-chain emitida por un verificador — se valida owner, PDA, vigencia y nivel">
+            attestation SAS
+          </Gloss>{" "}
+          del agente, lee el{" "}
+          <Gloss tip="Mandate PDA: la cuenta del programa que guarda la policy firmada por el dueño — límites, whitelist, expiración">
+            Mandate PDA
+          </Gloss>{" "}
+          del dueño, transfiere al{" "}
+          <Gloss tip="ATA (Associated Token Account): la cuenta de tokens del servicio donde cae el pago">
+            ATA
+          </Gloss>{" "}
+          del servicio y emite el{" "}
+          <Gloss tip="PaymentReceipt: recibo público que emite el programa en la misma tx — quién pagó, a quién, cuánto y cuándo">
+            recibo
+          </Gloss>
+          . Cualquier check que falla revierte la transacción completa: ni el
           pago ni el recibo existen. <b>La plata nunca se mueve</b> — el
           revert ocurre antes del transfer, no hay nada que devolver ni que
-          disputar. Eso es lo que un programa on-chain hace y un middleware
-          no puede. La autorización no es un documento que el merchant mira —
-          es una regla que el programa ejecuta.{" "}
+          disputar.{" "}
           <a href={explorerAddr(PROGRAM_ID)} target="_blank" rel="noreferrer">
             programa {short(PROGRAM_ID)} ↗
           </a>
         </p>
       </section>
 
-      {/* ── Evidencia: los 6 beats ── */}
-      <section>
-        <h2 className="sect">
-          La demo corrió en devnet — 6 beats, signatures reales
-        </h2>
+      {/* ── 5 · Evidencia: los 6 beats como timeline ── */}
+      <section className="fade-up">
+        <h2 className="sect">La evidencia — 6 beats, signatures reales</h2>
         <p className="plain">
           Corrida canónica post-fix (02/10/2026). Los rechazos son{" "}
           <b>transacciones fallidas reales on-chain</b> — cada línea linkea al
           explorer:
         </p>
-        <div className="card wide tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>beat</th>
-                <th>qué pasó</th>
-                <th>resultado</th>
-                <th>signature (devnet)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {BEATS.map((b) => (
-                <tr key={b.n} className={b.result === "fail" ? "fail" : ""}>
-                  <td className="beat-n">{b.n}</td>
-                  <td>
-                    <b>{b.title}</b>
-                    <div className="muted sm">{b.desc}</div>
-                  </td>
-                  <td>
-                    <span className={`verdict ${b.result === "ok" ? "ok" : "bad"}`}>
-                      {b.result === "ok" ? "CONFIRMADA" : "TX FALLIDA"}
-                      {b.err && <em>{b.err}</em>}
-                    </span>
-                  </td>
-                  <td className="sigcell">
-                    {b.sigs.map((s) => (
-                      <a
-                        key={s}
-                        href={explorerTx(s)}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={s}
-                      >
-                        {short(s)}
-                      </a>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="card wide">
+          <div className="timeline">
+            {BEATS.map((b) => (
+              <div
+                className={`tl ${b.result === "ok" ? "ok" : "fail"}`}
+                key={b.n}
+              >
+                <span className="n">beat {b.n}</span>
+                <b>{BEAT_TITLES[b.n] ?? b.title}</b>
+                <p>
+                  {b.desc} {b.err && <code>{b.err}</code>} ·{" "}
+                  {b.sigs.map((s) => (
+                    <a
+                      key={s}
+                      href={explorerTx(s)}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={s}
+                    >
+                      tx ↗
+                    </a>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
+          <details>
+            <summary>ver tabla completa</summary>
+            <div className="tablewrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>beat</th>
+                    <th>qué pasó</th>
+                    <th>resultado</th>
+                    <th>signature (devnet)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {BEATS.map((b) => (
+                    <tr key={b.n} className={b.result === "fail" ? "fail" : ""}>
+                      <td className="beat-n">{b.n}</td>
+                      <td>
+                        <b>{b.title}</b>
+                        <div className="muted sm">{b.desc}</div>
+                      </td>
+                      <td>
+                        <span
+                          className={`verdict ${b.result === "ok" ? "ok" : "bad"}`}
+                        >
+                          <i></i>
+                          {b.result === "ok" ? "CONFIRMADA" : "TX FALLIDA"}
+                          {b.err && <em>{b.err}</em>}
+                        </span>
+                      </td>
+                      <td className="sigcell">
+                        {b.sigs.map((s) => (
+                          <a
+                            key={s}
+                            href={explorerTx(s)}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={s}
+                          >
+                            {short(s)}
+                          </a>
+                        ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
         </div>
         <p className="note">
           fuente: <code>docs/09_DEMO_SUBMISSION.md</code> §3 · upgrade del
@@ -302,7 +396,7 @@ export default function Landing() {
       </section>
 
       {/* ── Direcciones verificables ── */}
-      <section>
+      <section className="fade-up">
         <h2 className="sect">Direcciones verificables (devnet)</h2>
         <div className="card wide tablewrap">
           <table>
@@ -326,12 +420,26 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Por qué ahora ── */}
-      <section>
+      {/* ── 6 · Actores ── */}
+      <section className="fade-up">
+        <h2 className="sect">Tres actores, una vuelta</h2>
+        <div className="trio">
+          {ACTORS.map((a) => (
+            <article className="card lift" key={a.who}>
+              <h3 className="prim">{a.who}</h3>
+              <p className="prim-q">{a.tag}</p>
+              <p className="plain">{a.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 7 · Por qué ahora ── */}
+      <section className="fade-up">
         <h2 className="sect">Por qué ahora</h2>
         <div className="whygrid">
           {WHY_NOW.map((w) => (
-            <article className="card" key={w.k}>
+            <article className="card lift" key={w.k}>
               <h3 className="why-k">{w.k}</h3>
               <p className="plain">{w.v}</p>
             </article>
@@ -339,8 +447,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Privacidad ── */}
-      <section>
+      {/* ── 8 · Privacidad ── */}
+      <section className="fade-up">
         <h2 className="sect">Privacidad — accountability, no vigilancia</h2>
         <div className="whygrid">
           {PRIVACY.map((p) => (
@@ -362,10 +470,10 @@ export default function Landing() {
         </p>
       </section>
 
-      {/* ── El negocio ── */}
-      <section>
+      {/* ── 8b · El negocio ── */}
+      <section className="fade-up">
         <h2 className="sect">Qué habilita para el negocio</h2>
-        <div className="adopters trio">
+        <div className="trio">
           <article className="card">
             <h3 className="prim">Defensa real en disputas</h3>
             <p className="prim-q">para el merchant</p>
@@ -398,8 +506,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Honestidad ── */}
-      <section className="card wide honest">
+      {/* ── 8c · Limitación honesta ── */}
+      <section className="card wide honest fade-up">
         <h2 className="sect">Limitación honesta (declarada)</h2>
         <p className="plain">
           El gate protege al <b>vendedor</b> que lo usa: un agente siempre puede
@@ -408,6 +516,23 @@ export default function Landing() {
           mundo real: es el merchant el que exige la credencial.{" "}
           <b>Lo que el gate cobra, el gate lo garantiza.</b>
         </p>
+      </section>
+
+      {/* ── 9 · CTA final ── */}
+      <section className="center fade-up" style={{ marginTop: "3.5rem" }}>
+        <h2 className="sect">Corré la demo</h2>
+        <p className="lede">
+          90 segundos, devnet real — un botón, seis beats, cuatro reverts
+          intencionales que quedan grabados on-chain.
+        </p>
+        <div className="cta-row">
+          <Link to="/demo" className="btn primary big">
+            ▶ Correr demo
+          </Link>
+          <Link to="/docs" className="btn">
+            Cómo se adopta
+          </Link>
+        </div>
       </section>
     </main>
   );

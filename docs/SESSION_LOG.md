@@ -286,3 +286,64 @@ Plantilla: fecha | meta | máquina y acceso real | archivos revisados | tareas e
 - **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
 - **Siguiente acción (humana):** idem s21 (entregas hackathon, video, facilitator). El botón sirve para grabar el video sin tipear.
 - **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 23 — 03/10/2026 (SDD `ui-redesign` — apply completo S1→S7)
+
+- **Meta:** rediseñar las 5 rutas del sitio (`/`, `/dashboard`, `/docs`, `/demo`, `/colaborar`) como "capa de confianza" — identidad dark crypto-native (teal+violeta), tipografía propia, copy en capas criollo→tooltip→código, sin tocar data-layer ni agregar deps. Change SDD `sdd/changes/ui-redesign/` (proposal/spec/design/tasks/test-plan/preview preexistentes).
+- **Implementado (slices S1→S7, en orden):**
+  - **S1 fundaciones:** `src/index.css` reescrito — tokens §3.1 (`--bg #070b13`, surfaces, teal `#2dd4bf`+violet `#a78bfa`, grad, ok/warn/bad, radios, glow, 3 familias tipográficas) + base + compat; `public/fonts/` con 8 woff2 locales (Space Grotesk 500/600/700, Inter 400/500/600, JetBrains Mono 400/500 — ~172 KB, magic `wOF2` verificado, origen Fontsource/OFL) + `@font-face` con `font-display:swap` y fallbacks; `index.html` meta theme-color+título+description — cero links externos.
+  - **S2 sistema+shell:** `index.css` completo §3.4 (~15 familias: btn/card/verdict/stat+dots/chip/stepper/term/term-gloss/codeblock+tok-*/timeline/topnav/badge/tablas/steps.big/adopters/repo-cta/usage/filters + focus-visible + reduced-motion global); `src/ui.tsx` nuevo (Brandmark SVG, Gloss accesible, CopyBtn, CodeBlock, Highlight CSS-only, TermLines, `useReveal` IntersectionObserver); `App.tsx` nav brandmark+wordmark gradient + `.sel` underline + chip devnet con dot + footer con marca — switch de rutas intacto.
+  - **S3 landing:** reescritura §4.1 — hero (chip live + H1 «Los agentes ya mueven plata. Que alguien responda.» + lede criollo + CTA dual + stats 6/6·~10·0) → problema → 3 primitivas (🪪✍️🧾 con `.sub` técnico) → flujo atómico 4 pasos → evidencia `.timeline` (7 BEATS de site.ts + tabla en `<details>`) → actores → por-qué-ahora (5) → privacidad+negocio+limitación honesta intacta → CTA `/demo`.
+  - **S4 demo:** stepper de 6 nodos en vivo — `beatStates()` parsea banners `══ BEAT N ══` y veredictos `──> ✓/✗` del output real (sección por beat hasta próximo banner/`RESUMEN`; `fail` solo si el script lo reporta inesperado — los reverts intencionales quedan `on`); `.term` window-chrome + `TermLines` (color semántico por línea, texto plano); servicios → chips dot; comandos → `CodeBlock` con copy; botón deshabilitado si runner offline.
+  - **S5 dashboard+adopción:** `.statstrip` 4 statcards (credencial/permiso/gasto/ledger + última lectura) derivadas del estado ya fetichado; selector agentes con `.dot` por estado SAS; panel mandato + barra `.usage` spent/cap (`role=progressbar`); ledger `.filters` client-side (todo/pagos/rechazos/otras); `Adoption.tsx` → `steps.big`, `CodeBlock` con header+highlight, adoptantes con dots.
+  - **S6 docs+colaborar:** actores → 4 cards `.adopter`; `steps.big`; snippets → `CodeBlock` con file-header+tokens; fricciones → `.whygrid`. `/colaborar`: `.repo-cta` arriba (Brandmark+URL/pending+Apache-2.0+chip programa), 5 áreas tagged, cierre "Lo que más vale hoy" (conversación facilitator x402 subida desde el note, §4.5).
+  - **S7 transversal:** 27 `Gloss` en 6 archivos — los 8 términos obligatorios (attestation, Mandate PDA, 402, PaymentReceipt, whitelist, issuer, devnet, ATA) + x402; `tabIndex=0`+`aria-label`+tooltip hover&focus; copy nivel-1 criollo en las 5 rutas.
+- **Verificación:** `npm run build` verde — `✓ 124 modules transformed`, `dist/index.html 0.74 kB` + `css 22.31 kB` + `js 625.30 kB`, `✓ built in 1m 11s` (solo warning chunk>500kB); `npx tsc --noEmit` limpio (2 corridas). Scans: hex tema viejo 0 · `https?://` en index.html/index.css 0 · `@import`/`url(http` 0 · CDN-names en src+dist 0 · dist solo anchors permitidos (explorer/RPC/web3.js internals) · `dangerouslySetInnerHTML` 0 · `prefers-reduced-motion` presente · 8 woff2 en `dist/fonts/` con magic `wOF2`. `git diff --stat` en `gate.ts`/`site.ts`/`snippets.ts`/`router.tsx`/`package.json` → vacío. vite dev :3404 sirve todas las páginas (módulos 200).
+- **Gotcha:** el resumen previo describía una data-layer que no existe — primer rewrite de Dashboard se rehizo desde `git show HEAD` tras descubrirlo; la lección vale: verificar tipos reales en `gate.ts` antes de asumir shape de datos.
+- **NO tocado:** `gate.ts`, `site.ts`, `snippets.ts`, `router.tsx`, `package.json` (deps); sin commits. `demo/package-lock.json` quedó modificado por `npm install` de setup (licencia MIT→Apache-2.0 + entries de workspaces — sin deps nuevas). `demo/target/idl/agentic_gate.json` regenerado (gitignored — necesario porque `gate.ts` lo importa).
+- **Pendiente/TODO:** revisión visual humana en el preview (rutas, 375px, Tab-focus, contraste) + corrida real del stepper con runner WSL :3406; `GITHUB_REPO_URL` sigue el TODO de `site.ts`.
+- **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
+- **Siguiente acción (humana):** revisión visual de la preview + aprobación de gate; luego idem s22 (entregas, video — el nuevo `/demo` con stepper es el plano para grabar).
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 24 — 03/10/2026 (SDD `ui-redesign` — verify adversarial)
+
+- **Meta:** verificación independiente contra spec — ningún claim del apply aceptado sin evidencia propia (subagente verify, contexto fresco).
+- **Ejecutado por el verificador (evidencia propia):**
+  - `cd demo/dashboard && npm run build` → **verde**: `✓ 124 modules transformed` · `dist/index.html 0.74 kB` · `dist/assets/index-*.css 22.31 kB` · `dist/assets/index-*.js 625.30 kB` · `✓ built in 1m 15s` (solo warning chunk>500 kB). `npx tsc --noEmit` → exit 0.
+  - Scans: 0 hex del tema viejo (los 14 del spec) en `src/` y `dist/` · `index.html` 0 URLs externas · `src/` 0 `@import`/`url(http` · 0 CDN-names (googleapis/gstatic/unpkg/jsdelivr/cdn/cloudflare) en el directorio · dominios en `dist/` clasificados: w3.org (ns SVG), explorer.solana.com + api.devnet.solana.com (permitidos), github.com (anchor repo), feross.org/reactjs.org/api.testnet/mainnet.solana.com (strings de libs bundleadas — nunca se fetchean), localhost (texto de snippets).
+  - Fuentes: 8 woff2 con magic `wOF2` verificado en `public/fonts/` Y en `dist/fonts/` post-build; `@font-face` ×8 con `font-display: swap` + fallbacks.
+  - Protegidos: `git diff`/`status` en `gate.ts`, `site.ts`, `snippets.ts`, `router.tsx`, `dashboard/package.json` → **cero**. Diffs de los tsx: agregados = `lastTick`/`lf`/`useReveal`/`beatStates` (aditivos); removidos = solo markup/copy + entrada muerta `vigenteM`; `fetch`/`Promise.all`/`setInterval(4000)`/`__RESULT__`/`SIG_RE`/probes `/svc/` sin líneas de diff; 0 `sendTransaction`; 0 `dangerouslySetInnerHTML`.
+  - `beatStates()` **ejecutado** (extraído verbatim, eval en node) contra mock del formato real de `run_beats.sh:23-25`: corrida completa → `[on×6]`; mid-run → `[on,on,on,run,"",""]`; `──> ✗` inesperado → `fail`; idle → `[""]×6`; corte tras 5a → beat5 `run` (requiere 2 oks). 5/5 escenarios correctos.
+  - Contraste WCAG calculado (luminancia relativa): text-dim/bg=7.50, /surface=6.96, /surface-2=6.19; verdicts 8.18/9.27/6.20/6.19; accents 10.58/7.24/6.71 — todos ≥4.5:1.
+  - Spot-check live: dev server `http://127.0.0.1:3404` vivo — 5 rutas → 200, woff2 → `font/woff2`, CSS servido con tokens/reduced-motion; runner `localhost:3406/health` → 200 (directo y vía proxy).
+- **Resultado: PASS CON WARNINGS** — artefactos `sdd/changes/ui-redesign/verification.md` (tabla completa R-01..R-16, CA-1..CA-13, INV-1..5 con evidencia) + `STATUS.md` → VERIFICADO.
+- **Warnings encontrados (documentados, no fixeados — verify no toca código):**
+  - **W1:** el "NO en verde" de §4.3 no quedó cableado — `.adopter .no` existe en CSS pero `Docs.tsx:128` usa `.muted`+texto plano (el selling point no se ve).
+  - **W2:** `.tablewrap.tall` (thead sticky) definida pero el ledger usa `.tablewrap` (Dashboard.tsx:542) — "header sticky si crece" inactivo.
+  - **W3:** `.fade-up` 0.45s y `.usage-fill` 0.4s > regla §3.5 <300ms (ambas las mata reduced-motion).
+  - **W4:** hex sueltos no fijados por design: `#c9d4e6` ×3 (texto code), `#f87171` (dot rojo term-chrome) — cosmético, no es tema viejo.
+  - **W5:** clases CSS muertas (`.status-dot`, `.card .sub`, `.tall`, `.no`, `.steps` plain).
+  - SUGGESTION: primitiva Permiso dice `mandato on-chain` (spec ejemplificaba `mandato PDA`); "whitelist" a pelo una vez en lede de Docs.
+- **[SIN VERIFICAR] declarado honestamente:** corrida real del stepper (requiere `POST /svc/runner/run` → muta devnet — fuera de alcance de verify; runner arriba, a 1 clic del humano) · Network tab real · emulación reduced-motion/375px/Tab en devtools · bloqueo de `/fonts/` real.
+- **Notas residuales:** `demo/package-lock.json` regen (licencia MIT→Apache-2.0 + enumeración completa de transitivos — 0 dep declarada nueva, 0 removidas); `demo/target/idl/agentic_gate.json` gitignored confirmado.
+- **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
+- **Siguiente acción (humana):** revisión visual en preview :3404 + `▶ Correr demo` con runner :3406 (verifica CA-6 live) + fix opcional W1–W5 (~5 líneas) → gate → archive.
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).
+
+## Sesión 25 — 03/10/2026 (SDD `ui-redesign` — fix-round + rebrand + archive)
+
+- **Meta:** cerrar los warnings del verify (W1–W5 + S1–S2), aplicar el rebrand del producto a **DNIA** (decisión humana: el proyecto se llama DNIA, no "agentic-dni") y archivar el change. Commit+push autorizado por el humano.
+- **Fixes aplicados (evidencia por archivo):**
+  - Rebrand: `agentic-dni` → `dnia` en `App.tsx` (nav + footer), `index.html` (title + meta description), `Landing.tsx` ×2, `Dashboard.tsx` h1, `Colaborar.tsx` ×2, header de `index.css`. Grep residual: solo `docs/CANDIDATE_O_agentic-dni.md` (nombre de archivo) y `agentic_gate` (programa on-chain) — correctos.
+  - W1: `Docs.tsx` — "no necesita: {valor}" ahora con clase `.no` (verde — el selling point se ve).
+  - W2: ledger del dashboard → `tablewrap tall` (thead sticky activo).
+  - W3: `.fade-up` 0.45→0.28s, `.usage-fill` 0.4→0.3s (regla §3.5 ≤300ms).
+  - W4: token `--code-text: #c9d4e6` (3 usos) + `.term-bar .r` → `var(--bad)`.
+  - W5: `.status-dot` alias, `.card .sub`, `.steps` plano eliminados (~10 líneas muertas).
+  - S1: subtítulo "mandato PDA" restaurado (Landing). S2: "whitelist" del lede glosada (`Gloss`).
+- **Re-verificación ejecutada:** `npm run build` → `✓ 124 modules`, `dist/index.html 0.73 kB`, `css 22.11 kB`, `js 625.40 kB`, `✓ built in 27s` (warning preexistente chunk>500 kB). `npx tsc --noEmit` → limpio. Grep `agentic-dni`/`agentic-<` → 0 matches fuera de nombres históricos válidos.
+- **Resultado: ARCHIVADO** — `verification.md` addendum con tabla de resolución; `STATUS.md` → "ARCHIVADO — PASS sin warnings abiertos"; `PROJECT_STATE.md` actualizado.
+- **Pendiente/TODO (humano):** revisión visual en :3404 (rutas, 375px, Tab, reduced-motion) + corrida real del stepper (`▶ Correr demo` — runner :3406 vivo) + video demo usando el nuevo `/demo` como plano.
+- **Bloqueos:** ninguno. Engram MCP sigue caído → fallback Markdown.
+- **Engram topic_key:** no aplicable (MCP no operativo — fallback Markdown).

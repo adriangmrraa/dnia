@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { Connection, PublicKey } from "@solana/web3.js";
+import { Gloss, useReveal } from "./ui";
 import {
   AttestationView,
   DemoConfig,
@@ -107,7 +108,6 @@ const IX_LABEL: Record<string, string> = {
 
 const BADGE: Record<string, string> = {
   vigente: "ok",
-  vigenteM: "ok",
   revocado: "bad",
   revocada: "bad",
   expirado: "warn",
@@ -120,11 +120,16 @@ const BADGE: Record<string, string> = {
 /** Chip de veredicto de una fila del ledger. */
 function Verdict({ r }: { r: LedgerRow }) {
   if (r.kind === "pago")
-    return <span className="verdict ok">PAGO ACEPTADO</span>;
+    return (
+      <span className="verdict ok">
+        <i></i>PAGO ACEPTADO
+      </span>
+    );
   if (r.kind === "fallida") {
     const esPago = !r.ixName || r.ixName === "Pay";
     return (
       <span className="verdict bad">
+        <i></i>
         {esPago ? "PAGO RECHAZADO" : "OPERACIÓN FALLIDA"}
         {r.errName && (
           <em>
@@ -150,7 +155,15 @@ const ATT_VERDICT: Record<string, { txt: string; cls: string }> = {
   error: { txt: "error al leer", cls: "bad" },
 };
 
+const LEDGER_FILTERS: { k: string; label: string }[] = [
+  { k: "all", label: "todo" },
+  { k: "pago", label: "pagos" },
+  { k: "fallida", label: "rechazos" },
+  { k: "otra-ix", label: "otras ops" },
+];
+
 export default function Dashboard() {
+  const ref = useReveal<HTMLElement>();
   const [cfg, setCfg] = useState<DemoConfig | null>(null);
   const [tab, setTab] = useState<"audit" | "adopcion">("audit");
   const [agentIdx, setAgentIdx] = useState(0);
@@ -162,6 +175,8 @@ export default function Dashboard() {
   const [err, setErr] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const [auto, setAuto] = useState(true);
+  const [lf, setLf] = useState("all");
+  const [lastTick, setLastTick] = useState<Date | null>(null);
 
   useEffect(() => {
     try {
@@ -198,6 +213,7 @@ export default function Dashboard() {
       cfg.agents.forEach((ag, i) => (map[ag.wallet.toBase58()] = atts[i]));
       setAttByAgent(map);
       setErr(null);
+      setLastTick(new Date());
     } catch (e: any) {
       setErr(String(e?.message ?? e));
     }
@@ -216,7 +232,7 @@ export default function Dashboard() {
     return (
       <main className="wrap">
         <article className="card wide">
-          <h1>agentic-dni · audit</h1>
+          <h1>dnia · auditoría en vivo</h1>
           <p className="bad">{err}</p>
           <p className="note">
             el dashboard read-only necesita <code>dashboard/.env</code> — se
@@ -230,15 +246,48 @@ export default function Dashboard() {
 
   const attV = ATT_VERDICT[att?.estado ?? "error"] ?? ATT_VERDICT.error;
   const wl = mandate?.whitelist ?? [];
+  const spendPct =
+    mandate?.exists && Number(mandate.dailyCap) > 0
+      ? Math.min(
+          100,
+          (Number(mandate.spentToday) / Number(mandate.dailyCap)) * 100
+        )
+      : 0;
+  const shownLedger =
+    lf === "all" ? ledger : ledger.filter((r) => r.kind === lf);
+  const credDot =
+    att?.estado === "vigente"
+      ? "ok"
+      : att?.estado === "expirada"
+        ? "warn"
+        : "bad";
+  const mandDot =
+    mandate?.estado === "vigente"
+      ? "ok"
+      : mandate?.estado === "expirado"
+        ? "warn"
+        : mandate?.exists
+          ? "bad"
+          : "off";
 
   return (
-    <main className="wrap">
-      <header>
-        <h1>agentic-dni · pagos de agentes con accountability on-chain</h1>
+    <main className="wrap wrap--dash" ref={ref}>
+      <header className="pagehead">
+        <h1>Auditoría en vivo — la chain, sin intermediarios</h1>
+        <p className="lede">
+          Credencial, permiso, gasto del día y recibos —{" "}
+          <b>leídos directo de devnet</b> cada 4 segundos. Cada cuenta y cada
+          tx linkea al explorer. Este panel nunca escribe: es solo lectura.
+        </p>
         <div className="meta">
-          <span className="chip">solana devnet</span>
+          <span className="chip">
+            <i className="dot ok"></i>solana{" "}
+            <Gloss tip="devnet: la red de prueba pública de Solana — transacciones reales, plata de mentira">
+              devnet
+            </Gloss>
+          </span>
           <a href={explorerAddr(cfg.programId)} target="_blank" rel="noreferrer">
-            gate {short(cfg.programId)}
+            gate {short(cfg.programId)} ↗
           </a>
           <label>
             <input
@@ -248,9 +297,64 @@ export default function Dashboard() {
             />{" "}
             live (4s)
           </label>
-          <button onClick={refresh}>refrescar</button>
+          <button className="mini-btn" onClick={refresh}>
+            refrescar
+          </button>
         </div>
       </header>
+
+      {/* ── Status strip: lo que ya pasó, de un vistazo ── */}
+      <section className="statstrip fade-up" aria-live="polite">
+        <div className="statcard">
+          <div className="lbl">
+            <Gloss tip="attestation SAS: credencial on-chain emitida por un verificador">
+              credencial
+            </Gloss>
+          </div>
+          <div className={`val ${credDot === "ok" ? "ok" : "bad"}`}>
+            <i className={`dot ${att ? credDot : "off"}`}></i>
+            {!att ? "…" : att.estado}
+          </div>
+        </div>
+        <div className="statcard">
+          <div className="lbl">
+            <Gloss tip="Mandate PDA: la cuenta del programa que guarda la policy firmada por el dueño">
+              permiso
+            </Gloss>
+          </div>
+          <div
+            className={`val ${
+              !mandate ? "" : mandate.estado === "vigente" ? "ok" : mandate.exists ? "bad" : ""
+            }`}
+          >
+            <i className={`dot ${mandDot}`}></i>
+            {!mandate ? "…" : mandate.exists ? mandate.estado : "inexistente"}
+          </div>
+        </div>
+        <div className="statcard">
+          <div className="lbl">gasto hoy</div>
+          <div className="val">
+            {mandate?.exists ? `$${mandate.spentToday}` : "—"}
+            {mandate?.exists && <small>de ${mandate.dailyCap}</small>}
+          </div>
+        </div>
+        <div className="statcard">
+          <div className="lbl">ledger</div>
+          <div className="val">
+            {ledger.length}
+            <small>
+              txs del mandato ·{" "}
+              {lastTick
+                ? lastTick.toLocaleTimeString("es-AR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })
+                : "…"}
+            </small>
+          </div>
+        </div>
+      </section>
 
       <nav className="tabs">
         <button
@@ -282,12 +386,21 @@ export default function Dashboard() {
                     : st === "expirada"
                       ? ["attestation vencida", "warn"]
                       : ["sin attestation", "muted"];
+              const dot =
+                st === "vigente"
+                  ? "ok"
+                  : st === "expirada"
+                    ? "warn"
+                    : st === "revocada"
+                      ? "bad"
+                      : "off";
               return (
                 <button
                   key={a.wallet.toBase58()}
                   className={i === agentIdx ? "sel" : ""}
                   onClick={() => setAgentIdx(i)}
                 >
+                  <i className={`dot ${dot}`}></i>
                   {a.label} <code>{short(a.wallet)}</code>{" "}
                   <span className={`mini ${chip[1]}`}>{chip[0]}</span>
                 </button>
@@ -298,7 +411,12 @@ export default function Dashboard() {
           <section className="grid">
             {/* ── Panel: identidad (attestation SAS) ── */}
             <article className="card">
-              <h2>¿Quién está atrás? — attestation SAS</h2>
+              <h3>
+                ¿Quién está atrás? —{" "}
+                <Gloss tip="attestation SAS: credencial on-chain emitida por un verificador">
+                  credencial
+                </Gloss>
+              </h3>
               <p className={`badge ${attV.cls}`}>{attV.txt}</p>
               <dl>
                 <dt>nivel</dt>
@@ -307,7 +425,11 @@ export default function Dashboard() {
                 <dd>{fmtTs(att?.issuedAt)}</dd>
                 <dt>vence</dt>
                 <dd>{att?.expiry ? fmtTs(att.expiry) : "sin expiración"}</dd>
-                <dt>issuer</dt>
+                <dt>
+                  <Gloss tip="issuer: el verificador que emite (y puede revocar) las credenciales — hace el KYC off-chain">
+                    issuer
+                  </Gloss>
+                </dt>
                 <dd>
                   {gateCfg?.sasCredential ? (
                     <Addr cfg={cfg} addr={gateCfg.sasCredential} />
@@ -329,7 +451,12 @@ export default function Dashboard() {
 
             {/* ── Panel: mandato — la política en criollo ── */}
             <article className="card">
-              <h2>¿Qué autorizó el owner? — mandato</h2>
+              <h3>
+                ¿Qué autorizó el owner? —{" "}
+                <Gloss tip="Mandate PDA: la cuenta del programa que guarda la policy firmada por el dueño — límites, whitelist, expiración">
+                  permiso
+                </Gloss>
+              </h3>
               <p className={`badge ${BADGE[mandate?.estado ?? "inexistente"]}`}>
                 {mandate?.exists ? mandate.estado : "inexistente"}
               </p>
@@ -352,6 +479,25 @@ export default function Dashboard() {
                       </li>
                     ))}
                   </ul>
+                  <div
+                    className="usage"
+                    role="progressbar"
+                    aria-valuenow={Math.round(spendPct)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="porcentaje del tope diario gastado"
+                  >
+                    <div
+                      className="usage-fill"
+                      style={{
+                        width: `${spendPct}%`,
+                        background:
+                          spendPct > 90
+                            ? "linear-gradient(90deg, var(--bad), var(--warn))"
+                            : undefined,
+                      }}
+                    ></div>
+                  </div>
                   <dl>
                     <dt>total gastado</dt>
                     <dd>${mandate.totalSpent}</dd>
@@ -381,52 +527,70 @@ export default function Dashboard() {
 
           {/* ── Panel: ledger de pagos ── */}
           <article className="card wide">
-            <h2>Qué pasó — ledger del agente (txs del mandato)</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>tx</th>
-                  <th>resultado</th>
-                  <th>monto</th>
-                  <th>destino</th>
-                  <th>invoice</th>
-                  <th>hora</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ledger.length === 0 && (
+            <h3>Qué pasó — ledger del agente (txs del mandato)</h3>
+            <div className="filters">
+              {LEDGER_FILTERS.map((fl) => (
+                <button
+                  key={fl.k}
+                  className={`fbtn ${lf === fl.k ? "sel" : ""}`}
+                  onClick={() => setLf(fl.k)}
+                >
+                  {fl.label}
+                </button>
+              ))}
+            </div>
+            <div className="tablewrap tall">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan={6} className="muted">
-                      sin transacciones todavía
-                    </td>
+                    <th>tx</th>
+                    <th>resultado</th>
+                    <th>monto</th>
+                    <th>destino</th>
+                    <th>invoice</th>
+                    <th>hora</th>
                   </tr>
-                )}
-                {ledger.map((r) => (
-                  <tr key={r.sig} className={r.kind === "fallida" ? "fail" : ""}>
-                    <td>
-                      <a href={explorerTx(r.sig)} target="_blank" rel="noreferrer">
-                        {short(r.sig)}
-                      </a>
-                    </td>
-                    <td>
-                      <Verdict r={r} />
-                    </td>
-                    <td>{r.amount ? `$${r.amount}` : "—"}</td>
-                    <td>
-                      <Addr cfg={cfg} addr={r.payee} />
-                    </td>
-                    <td>
-                      <code>{r.serviceRef ? r.serviceRef.slice(0, 12) + "…" : "—"}</code>
-                    </td>
-                    <td>{fmtTs(r.time)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {shownLedger.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="muted">
+                        {ledger.length === 0
+                          ? "sin transacciones todavía — corré la demo y este ledger se llena solo"
+                          : "sin transacciones para este filtro"}
+                      </td>
+                    </tr>
+                  )}
+                  {shownLedger.map((r) => (
+                    <tr key={r.sig} className={r.kind === "fallida" ? "fail" : ""}>
+                      <td>
+                        <a href={explorerTx(r.sig)} target="_blank" rel="noreferrer">
+                          {short(r.sig)}
+                        </a>
+                      </td>
+                      <td>
+                        <Verdict r={r} />
+                      </td>
+                      <td>{r.amount ? `$${r.amount}` : "—"}</td>
+                      <td>
+                        <Addr cfg={cfg} addr={r.payee} />
+                      </td>
+                      <td>
+                        <code>{r.serviceRef ? r.serviceRef.slice(0, 12) + "…" : "—"}</code>
+                      </td>
+                      <td>{fmtTs(r.time)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p className="note">
-              cada línea linkea al explorer — el recibo PaymentReceipt se parsea
-              de los logs <code>Program data:</code> de la tx (R-05) · los
-              rechazos son txs fallidas reales on-chain con su GateError.
+              cada línea linkea al explorer — el recibo{" "}
+              <Gloss tip="PaymentReceipt: recibo público que emite el programa en la misma tx — quién pagó, a quién, cuánto y cuándo">
+                PaymentReceipt
+              </Gloss>{" "}
+              se parsea de los logs <code>Program data:</code> de la tx (R-05) ·
+              los rechazos son txs fallidas reales on-chain con su GateError.
             </p>
           </article>
         </>

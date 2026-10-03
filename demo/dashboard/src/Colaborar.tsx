@@ -3,6 +3,7 @@
  * publique), issues/PRs, y las áreas reales de trabajo del roadmap.
  * Estática — funciona offline.
  */
+import { Brandmark, Gloss, useReveal } from "./ui";
 import { GITHUB_REPO_URL, PROGRAM_ID, explorerAddr } from "./site";
 
 const AREAS = [
@@ -44,56 +45,86 @@ function RepoLink() {
     );
   }
   return (
-    <a href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
+    <a className="url" href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
       {GITHUB_REPO_URL} ↗
     </a>
   );
 }
 
 export default function Colaborar() {
+  const ref = useReveal<HTMLElement>();
   return (
-    <main className="wrap">
+    <main className="wrap" ref={ref}>
       <header className="pagehead">
-        <h1>Colaborar</h1>
+        <h1>Colaborar — la capa es de todos</h1>
         <p className="lede">
-          agentic-dni es un protocolo abierto — el gate y los schemas son bien
+          dnia es un protocolo abierto — el gate y los schemas son bien
           público: nadie confía en una capa de credenciales que controla un
-          competidor. Código <span className="license-badge">Apache-2.0</span>{" "}
-          — <RepoLink />
+          competidor.
         </p>
       </header>
 
+      {/* ── Repo CTA — lo primero que se ve ── */}
+      <section className="card repo-cta fade-up">
+        <Brandmark size={34} />
+        <div className="grow">
+          <b>dnia</b> — código abierto{" "}
+          <span className="license-badge">Apache-2.0</span>
+          <div>
+            <RepoLink />
+          </div>
+        </div>
+        <a
+          className="chip"
+          href={explorerAddr(PROGRAM_ID)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <i className="dot ok"></i>programa devnet ↗
+        </a>
+      </section>
+
       {/* ── Cómo contribuir ── */}
-      <section className="card wide">
+      <section className="card wide fade-up">
         <h2 className="sect">Cómo contribuir</h2>
-        <ol className="steps">
+        <ol className="steps big">
           <li>
-            <b>Abrí un issue</b> — bug, pregunta de diseño o propuesta de
-            integración. El dossier de investigación (
-            <code>docs/CANDIDATE_O_agentic-dni.md</code>) y el roadmap (
-            <code>docs/10_ROADMAP.md</code>) explican el porqué de cada
-            decisión.
+            <p>
+              <b>Abrí un issue</b> — bug, pregunta de diseño o propuesta de
+              integración. El dossier de investigación (
+              <code>docs/CANDIDATE_O_agentic-dni.md</code>) y el roadmap (
+              <code>docs/10_ROADMAP.md</code>) explican el porqué de cada
+              decisión.
+            </p>
           </li>
           <li>
-            <b>PRs bienvenidos</b> — el único programa custom es{" "}
-            <code>agentic_gate</code> (
-            <a href={explorerAddr(PROGRAM_ID)} target="_blank" rel="noreferrer">
-              {PROGRAM_ID}
-            </a>
-            , Anchor 1.2.0). Todo lo demás es TypeScript: servicios, agent CLI,
-            este sitio.
+            <p>
+              <b>PRs bienvenidos</b> — el único programa custom es{" "}
+              <code>agentic_gate</code> (
+              <a
+                href={explorerAddr(PROGRAM_ID)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {PROGRAM_ID}
+              </a>
+              , Anchor 1.2.0). Todo lo demás es TypeScript: servicios, agent
+              CLI, este sitio.
+            </p>
           </li>
           <li>
-            <b>Verificá antes de proponer</b> — la suite corre sobre
-            surfpool/LiteSVM con el programa SAS real dumpeado de devnet
-            (21/21): <code>cd demo && npx ts-mocha</code>. La evidencia on-chain
-            está en <code>docs/09_DEMO_SUBMISSION.md</code>.
+            <p>
+              <b>Verificá antes de proponer</b> — la suite corre sobre
+              surfpool/LiteSVM con el programa SAS real dumpeado de devnet
+              (21/21): <code>cd demo && npx ts-mocha</code>. La evidencia
+              on-chain está en <code>docs/09_DEMO_SUBMISSION.md</code>.
+            </p>
           </li>
         </ol>
       </section>
 
       {/* ── Áreas de trabajo ── */}
-      <section>
+      <section className="fade-up">
         <h2 className="sect">En qué se puede trabajar (roadmap real)</h2>
         <div className="whygrid">
           {AREAS.map((a) => (
@@ -106,15 +137,28 @@ export default function Colaborar() {
         </div>
         <p className="note">
           priorización completa por evidencia/riesgo:{" "}
-          <code>docs/10_ROADMAP.md</code> §3. Condición honesta del proyecto:
-          antes que código nuevo hace falta una conversación con ≥1
-          facilitator x402 que confirme el pull — si podés abrir esa puerta,
-          vale más que cualquier PR.
+          <code>docs/10_ROADMAP.md</code> §3.
+        </p>
+      </section>
+
+      {/* ── Lo que más vale hoy ── */}
+      <section className="card wide honest fade-up">
+        <h2 className="sect">Lo que más vale hoy</h2>
+        <p className="plain">
+          No es código. La condición honesta del proyecto: antes que código
+          nuevo hace falta <b>una conversación con ≥1 facilitator{" "}
+          <Gloss tip="x402: el estándar abierto que usa HTTP 402 para cobros de agente a servicio — PayAI, MCPay, Corbits">
+            x402
+          </Gloss>{" "}
+          que confirme el pull</b> — un router real dispuesto a enchufar el
+          verify como hook de settle. Si podés abrir esa puerta, vale más que
+          cualquier PR. Todo lo demás del roadmap espera atrás de esa
+          señal.
         </p>
       </section>
 
       {/* ── Licencia ── */}
-      <section className="card wide">
+      <section className="card wide fade-up">
         <h2 className="sect">Licencia — Apache-2.0</h2>
         <p className="plain">
           Apache License 2.0: uso libre, comercial incluido, con grant de
